@@ -1,0 +1,323 @@
+@import "tailwindcss";
+
+/* ─── Design Tokens ─── */
+:root {
+    --vd-navy-900: #0d1321;
+    --vd-navy-800: #121b30;
+    --vd-navy-700: #1a2540;
+    --vd-navy-300: #5a6385;
+    --vd-navy-200: #8890a8;
+    --vd-navy-100: #c4c8d6;
+    --vd-navy-50: #e8eaf0;
+    --vd-primary: #5687f3;
+    --vd-primary-dark: #3a6be0;
+    --vd-primary-light: #7ba3f7;
+    --vd-primary-bg: #e8f0fe;
+    --vd-primary-ring: rgba(86, 135, 243, 0.35);
+    --vd-success: #22c55e;
+    --vd-warning: #f59e0b;
+    --vd-danger: #ef4444;
+    --vd-surface: #ffffff;
+    --vd-surface-alt: #f8fafc;
+    --vd-text: #1e293b;
+    --vd-text-secondary: #64748b;
+    --vd-border: #e2e8f0;
+}
+
+/* ─── Base ─── */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background: var(--vd-surface-alt);
+    color: var(--vd-text);
+    line-height: 1.5;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--vd-navy-200);
+    border-radius: 3px;
+}
+
+/* ─── Animations ─── */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ─── Cards ─── */
+.vd-card {
+    background: var(--vd-surface);
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+    padding: 1.5rem;
+    border: 1px solid var(--vd-border);
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* ─── Buttons ─── */
+.vd-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    line-height: 1.25;
+    font-family: inherit;
+}
+
+.vd-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.vd-btn-primary {
+    background-color: #5687f3;
+    color: #ffffff;
+}
+
+.vd-btn-primary:hover:not(:disabled) {
+    background-color: #3a6be0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(86, 135, 243, 0.4);
+}
+
+.vd-btn-secondary {
+    background-color: transparent;
+    color: #5687f3;
+    border: 1.5px solid #5687f3;
+}
+
+.vd-btn-secondary:hover:not(:disabled) {
+    background-color: #e8f0fe;
+}
+
+.vd-btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+/* ─── Inputs ─── */
+.vd-input,
+.vd-select {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    color: #1e293b;
+    background-color: #ffffff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    font-family: inherit;
+}
+
+.vd-input:focus,
+.vd-select:focus {
+    border-color: #5687f3;
+    box-shadow: 0 0 0 3px rgba(86, 135, 243, 0.2);
+}
+
+.vd-input::placeholder {
+    color: #94a3b8;
+}
+
+textarea.vd-input {
+    resize: vertical;
+}
+
+.vd-select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+    padding-right: 2.5rem;
+}
+
+.vd-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 0.375rem;
+}
+
+/* ─── Badges ─── */
+.vd-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.vd-badge-critico {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+}
+
+.vd-badge-alto {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+.vd-badge-medio {
+    background: rgba(86, 135, 243, 0.12);
+    color: #5687f3;
+}
+
+.vd-badge-bajo {
+    background: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
+}
+
+/* ─── Tables ─── */
+.vd-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.875rem;
+}
+
+.vd-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    border-bottom: 2px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.vd-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+}
+
+.vd-table tr:hover td {
+    background: #f0f5ff;
+}
+
+.vd-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* ─── Progress ─── */
+.vd-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e8eaf0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.vd-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #5687f3, #7ba3f7);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+/* ─── Stepper ─── */
+.vd-stepper {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.vd-step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    cursor: pointer;
+}
+
+.vd-step-number {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.3s;
+}
+
+.vd-step-active .vd-step-number {
+    background: #5687f3;
+    color: #fff;
+}
+
+.vd-step-completed .vd-step-number {
+    background: #22c55e;
+    color: #fff;
+}
+
+.vd-step-pending .vd-step-number {
+    background: #e8eaf0;
+    color: #5a6385;
+}
+
+.vd-step-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vd-step-line {
+    flex: 1;
+    height: 2px;
+    background: #e2e8f0;
+    margin: 0 0.5rem;
+}
+
+.vd-step-line.completed {
+    background: #22c55e;
+}
