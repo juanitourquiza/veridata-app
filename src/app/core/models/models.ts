@@ -55,4 +55,5 @@ export interface ExecutiveReport {
 export interface DomainMaturity { domain_id: number; domain_name: string; domain_code: string; avg_maturity: number; evaluated_count: number; }
 export interface AiConfig { id: number; provider: string; model: string; is_default: boolean; has_key: boolean; }
 export interface AuditLog { id: number; user: User; action: string; auditable_type?: string; auditable_id?: number; old_values?: unknown; new_values?: unknown; ip_address: string; created_at: string; }
+export interface Deliverable { id: number; project_id: number; domain_code: string; domain_name: string; title: string; description: string; status: 'pending' | 'generated' | 'uploaded'; content: string | null; file_path: string | null; }
 export interface PaginatedResponse<T> { data: T[]; current_page: number; last_page: number; per_page: number; total: number; }

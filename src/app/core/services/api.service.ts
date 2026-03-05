@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../environment';
-import { Project, Evaluation, Gap, ActionItem, ExecutiveReport, ControlDomain, PaginatedResponse, Framework } from '../models/models';
+import { Project, Evaluation, Gap, ActionItem, ExecutiveReport, ControlDomain, PaginatedResponse, Framework, Deliverable, User } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -32,10 +32,18 @@ export class ApiService {
     // Reports
     generateExecutiveReport(projectId: number): Observable<ExecutiveReport> { return this.http.post<ExecutiveReport>(`${this.base}/projects/${projectId}/reports/executive-ai`, {}); }
 
+    // Deliverables
+    getDeliverables(projectId: number): Observable<{ deliverables: Deliverable[] }> { return this.http.get<{ deliverables: Deliverable[] }>(`${this.base}/projects/${projectId}/deliverables`); }
+    generateDeliverables(projectId: number): Observable<{ deliverables: Deliverable[]; total: number }> { return this.http.post<{ deliverables: Deliverable[]; total: number }>(`${this.base}/projects/${projectId}/deliverables`, {}); }
+    updateDeliverable(projectId: number, delivId: number, data: Partial<Deliverable>): Observable<{ deliverable: Deliverable }> { return this.http.put<{ deliverable: Deliverable }>(`${this.base}/projects/${projectId}/deliverables/${delivId}`, data); }
+
     // Shared
     createSharedLink(projectId: number, type: string, expiresDays = 7): Observable<{ url: string }> { return this.http.post<{ url: string }>(`${this.base}/projects/${projectId}/share`, { type, expires_days: expiresDays }); }
 
     // Frameworks
     getFrameworks(): Observable<Framework[]> { return this.http.get<Framework[]>(`${this.base}/admin/frameworks`); }
     getControls(frameworkId: number): Observable<ControlDomain[]> { return this.http.get<ControlDomain[]>(`${this.base}/admin/frameworks/${frameworkId}/controls`); }
+
+    // Users (for assignment dropdowns)
+    getUsers(): Observable<{ data: User[] }> { return this.http.get<{ data: User[] }>(`${this.base}/users`); }
 }
