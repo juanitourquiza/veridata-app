@@ -26,10 +26,10 @@ import { Project } from '../../core/models/models';
       <div class="project-grid">
         @for (project of projects(); track project.id) {
           <a [routerLink]="'/projects/' + project.id" class="vd-card project-card">
-            <div class="card-header"><h3>{{ project.name }}</h3><span class="vd-badge" [class]="'vd-badge-' + statusBadge(project.status)">{{ project.status }}</span></div>
+            <div class="card-header"><h3>{{ project.name }}</h3><span class="vd-badge" [class]="'vd-badge-' + statusBadge(project.status)">{{ statusLabel(project.status) }}</span></div>
             <p class="desc">{{ project.description || 'Sin descripción' }}</p>
             <div class="card-meta"><span>📋 {{ project.framework?.name || 'N/A' }}</span><span>👥 {{ project.data_subjects_count | number }} titulares</span></div>
-            <div class="maturity"><div class="maturity-label"><span>Madurez Global</span><strong>{{ project.global_maturity | number:'1.0-0' }}%</strong></div><div class="vd-progress-bar"><div class="vd-progress-fill" [style.width.%]="project.global_maturity * 20"></div></div></div>
+            <div class="maturity"><div class="maturity-label"><span>Madurez Global</span><strong>{{ (project.global_maturity / 5) * 100 | number:'1.0-0' }}% ({{ project.global_maturity | number:'1.1-1' }}/5)</strong></div><div class="vd-progress-bar"><div class="vd-progress-fill" [style.width.%]="(project.global_maturity / 5) * 100"></div></div></div>
             @if (project.large_scale) { <div class="risk-badges"><span class="vd-badge vd-badge-critico">Gran Escala</span>@if (project.dpo_required) { <span class="vd-badge vd-badge-alto">DPO Requerido</span> }</div> }
           </a>
         }
@@ -65,5 +65,23 @@ export class ProjectListComponent implements OnInit {
   loading = signal(true);
   constructor(private api: ApiService, public auth: AuthService) { }
   ngOnInit(): void { this.api.getProjects().subscribe({ next: (res) => { this.projects.set(res.data); this.loading.set(false); }, error: () => this.loading.set(false) }); }
-  statusBadge(status: string): string { return status === 'completed' ? 'bajo' : status === 'in_progress' ? 'medio' : status === 'draft' ? 'alto' : 'critico'; }
+  statusBadge(status: string): string {
+    const map: Record<string, string> = {
+      'draft': 'alto',
+      'in_progress': 'medio',
+      'completed': 'bajo',
+      'archived': 'critico'
+    };
+    return map[status] || 'critico';
+  }
+
+  statusLabel(status: string): string {
+    const map: Record<string, string> = {
+      'draft': 'Borrador',
+      'in_progress': 'En Progreso',
+      'completed': 'Completado',
+      'archived': 'Archivado'
+    };
+    return map[status] || status;
+  }
 }

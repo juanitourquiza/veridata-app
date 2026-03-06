@@ -553,6 +553,10 @@ export class ProjectWizardComponent implements OnInit {
       const msg = `Hay elementos pendientes:\n${pendingDeliverables} entregables pendientes\n${pendingActions} acciones pendientes\n\n¿Deseas finalizar de todas formas?`;
       if (!confirm(msg)) return;
     }
-    this.router.navigate(['/projects']);
+    // Actualizar status a completed
+    this.api.updateProject(this.projectId, { status: 'completed' }).subscribe({
+      next: () => this.router.navigate(['/projects']),
+      error: () => this.router.navigate(['/projects'])
+    });
   }
 }
