@@ -165,7 +165,13 @@ import {
       <div class="vd-card gap-report" style="margin-top:1.25rem">
         <div class="section-header">
           <div><h3>🔎 Informe de Análisis GAP</h3><small style="color:#64748b">Análisis de brechas de cumplimiento</small></div>
-          <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateGaps()" [disabled]="generatingGaps()">{{ generatingGaps() ? 'Generando...' : 'Generar Brechas' }}</button>
+          <div style="display:flex;gap:0.5rem">
+            @if (gaps().length) {
+              <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadGapReportPdf()">📄 PDF</button>
+              <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadGapReportWord()">📝 Word</button>
+            }
+            <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateGaps()" [disabled]="generatingGaps()">{{ generatingGaps() ? 'Generando...' : 'Generar Brechas' }}</button>
+          </div>
         </div>
         @if (gaps().length) {
           <!-- Gap summary cards -->
@@ -220,6 +226,10 @@ import {
       <div class="vd-card">
         <div class="section-header"><h3>📋 Plan de Acción</h3>
           <div style="display:flex;gap:0.5rem">
+            @if (actionItems().length) {
+              <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadActionPlanPdf()">📄 PDF</button>
+              <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadActionPlanWord()">📝 Word</button>
+            }
             <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="showDeliverables = true">📂 Entregables</button>
             <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="shareProject()">🔗 Compartir</button>
           </div>
@@ -622,6 +632,70 @@ export class ProjectWizardComponent implements OnInit {
         window.URL.revokeObjectURL(url);
       },
       error: () => alert('Error al descargar el Word del informe ejecutivo.')
+    });
+  }
+
+  downloadGapReportPdf(): void {
+    this.api.downloadGapReportPdf(this.projectId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `informe_gap_${this.project.name}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => alert('Error al descargar el PDF del informe GAP.')
+    });
+  }
+
+  downloadGapReportWord(): void {
+    this.api.downloadGapReportWord(this.projectId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `informe_gap_${this.project.name}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => alert('Error al descargar el Word del informe GAP.')
+    });
+  }
+
+  downloadActionPlanPdf(): void {
+    this.api.downloadActionPlanPdf(this.projectId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `plan_accion_${this.project.name}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => alert('Error al descargar el PDF del plan de acción.')
+    });
+  }
+
+  downloadActionPlanWord(): void {
+    this.api.downloadActionPlanWord(this.projectId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `plan_accion_${this.project.name}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => alert('Error al descargar el Word del plan de acción.')
     });
   }
 

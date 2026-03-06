@@ -42,6 +42,14 @@ export class ApiService {
     downloadDeliverablePdf(projectId: number, delivId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/deliverables/${delivId}/download-pdf`, { responseType: 'blob' }); }
     downloadDeliverableWord(projectId: number, delivId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/deliverables/${delivId}/download-word`, { responseType: 'blob' }); }
 
+    // Action Plan Reports
+    downloadActionPlanPdf(projectId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/action-plan/pdf`, { responseType: 'blob' }); }
+    downloadActionPlanWord(projectId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/action-plan/word`, { responseType: 'blob' }); }
+
+    // GAP Reports
+    downloadGapReportPdf(projectId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/gaps/pdf`, { responseType: 'blob' }); }
+    downloadGapReportWord(projectId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/gaps/word`, { responseType: 'blob' }); }
+
     // Shared
     createSharedLink(projectId: number, type: string, expiresDays = 7): Observable<{ url: string }> { return this.http.post<{ url: string }>(`${this.base}/projects/${projectId}/share`, { type, expires_days: expiresDays }); }
 
