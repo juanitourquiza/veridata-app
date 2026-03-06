@@ -79,7 +79,7 @@ import {
     @if (currentStep() === 3) {
       <!-- Metrics Summary -->
       <div class="results-grid">
-        <div class="vd-card metric"><div class="metric-value">{{ globalMaturityPercent() | number:'1.0-0' }}%</div><div class="metric-label">Madurez Global</div><div class="metric-bar vd-progress-bar"><div class="vd-progress-fill" [style.width.%]="globalMaturityPercent()"></div></div></div>
+        <div class="vd-card metric"><div class="metric-value">{{ globalMaturityPercent() | number:'1.0-0' }}%</div><div class="metric-label">Madurez Global ({{ globalMaturity() | number:'1.1-1' }}/5)</div><div class="metric-bar vd-progress-bar"><div class="vd-progress-fill" [style.width.%]="globalMaturityPercent()"></div></div></div>
         <div class="vd-card metric"><div class="metric-value" [style.color]="isLargeScale() ? '#ef4444' : '#22c55e'">{{ isLargeScale() ? 'Sí' : 'No' }}</div><div class="metric-label">Gran Escala</div>
           <div class="large-scale-toggle"><label class="chip small" [class.selected]="manualLargeScale !== null"><input type="checkbox" [checked]="manualLargeScale !== null" (change)="toggleManualLargeScale()"><span>Definir manualmente</span></label>
             @if (manualLargeScale !== null) { <select class="vd-select" style="max-width:100px;margin-top:0.5rem" [(ngModel)]="manualLargeScale"><option [ngValue]="true">Sí</option><option [ngValue]="false">No</option></select> }
@@ -98,7 +98,7 @@ import {
       <div class="vd-card">
         <h3>📊 Madurez por Dominio</h3>
         @for (dm of domainMaturity(); track dm.domain_id) {
-          <div class="domain-score"><div class="ds-label"><span>{{ dm.domain_code }}</span><strong>{{ (dm.avg_maturity / 5) * 100 | number:'1.0-0' }}%</strong></div><div class="vd-progress-bar"><div class="vd-progress-fill" [style.width.%]="(dm.avg_maturity / 5) * 100" [style.background]="dm.avg_maturity >= 4 ? 'linear-gradient(90deg,#22c55e,#4ade80)' : dm.avg_maturity >= 3 ? 'linear-gradient(90deg,#5687f3,#7ba3f7)' : dm.avg_maturity >= 2 ? 'linear-gradient(90deg,#f59e0b,#fbbf24)' : 'linear-gradient(90deg,#ef4444,#f87171)'"></div></div></div>
+          <div class="domain-score"><div class="ds-label"><span>{{ dm.domain_code }}</span><strong>{{ dm.avg_maturity | number:'1.1-1' }}/5 ({{ (dm.avg_maturity / 5) * 100 | number:'1.0-0' }}%)</strong></div><div class="vd-progress-bar"><div class="vd-progress-fill" [style.width.%]="(dm.avg_maturity / 5) * 100" [style.background]="dm.avg_maturity >= 4 ? 'linear-gradient(90deg,#22c55e,#4ade80)' : dm.avg_maturity >= 3 ? 'linear-gradient(90deg,#5687f3,#7ba3f7)' : dm.avg_maturity >= 2 ? 'linear-gradient(90deg,#f59e0b,#fbbf24)' : 'linear-gradient(90deg,#ef4444,#f87171)'"></div></div></div>
         }
       </div>
 
