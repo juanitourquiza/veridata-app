@@ -498,7 +498,20 @@ export class ProjectWizardComponent implements OnInit {
     });
   }
 
-  generateAiReport(): void { this.generatingReport.set(true); this.api.generateExecutiveReport(this.projectId).subscribe({ next: (r: ExecutiveReport) => { this.report.set(r); this.generatingReport.set(false); }, error: () => this.generatingReport.set(false) }); }
+  generateAiReport(): void {
+    this.generatingReport.set(true);
+    this.api.generateExecutiveReport(this.projectId).subscribe({
+      next: (r: ExecutiveReport) => { this.report.set(r); this.generatingReport.set(false); },
+      error: (err) => {
+        this.generatingReport.set(false);
+        if (err.status === 429) {
+          alert('Has alcanzado el límite de generación de reportes. Por favor espera un momento e intenta de nuevo.');
+        } else {
+          alert('Error al generar el reporte: ' + (err.error?.message || 'Inténtalo de nuevo'));
+        }
+      }
+    });
+  }
 
   generateActionPlan(): void { this.api.generateActionPlan(this.projectId).subscribe({ next: (res: { action_items: ActionItem[] }) => { this.actionItems.set(res.action_items); this.goToStep(4); } }); }
 
