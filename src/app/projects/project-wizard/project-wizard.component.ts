@@ -438,7 +438,14 @@ export class ProjectWizardComponent implements OnInit {
 
   switchDeliverableTab(tab: 'pending' | 'generated'): void {
     this.deliverableTab = tab;
-    this.selectedDeliverable.set(null);
+    // Mantener selección solo si el entregable existe en la nueva pestaña
+    const currentSelection = this.selectedDeliverable();
+    if (currentSelection) {
+      const existsInNewTab = this.currentDeliverables().some(d => d.id === currentSelection.id);
+      if (!existsInNewTab) {
+        this.selectedDeliverable.set(null);
+      }
+    }
   }
 
   saveProject(): void {
