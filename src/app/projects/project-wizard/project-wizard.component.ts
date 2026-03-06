@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import {
-  Project, Framework, ControlDomain, Evaluation, Gap, ActionItem, ExecutiveReport, DomainMaturity, Deliverable, User
+  Project, Framework, ControlDomain, Control, Evaluation, Gap, ActionItem, ExecutiveReport, DomainMaturity, Deliverable, User
 } from '../../core/models/models';
 
 @Component({
@@ -57,14 +57,73 @@ import {
           </div>
           @if (expandedDomains.has(domain.id)) {
             <table class="vd-table">
-              <thead><tr><th style="width:100px">Código</th><th>Control</th><th style="width:180px">Madurez</th><th style="width:200px">Hallazgo</th></tr></thead>
+              <thead><tr><th style="width:100px">Código</th><th>Control</th><th style="width:180px">Madurez</th><th style="width:200px">Hallazgo</th><th style="width:80px">Acciones</th></tr></thead>
               <tbody>
                 @for (control of domain.controls; track control.id) {
                   <tr>
                     <td><strong>{{ control.code }}</strong></td>
-                    <td><div>{{ control.name }}</div><small style="color:#64748b">{{ control.statement }}</small></td>
+                    <td>
+                      @if (editingControl() === control.id) {
+                        <div style="display:flex;flex-direction:column;gap:0.5rem">
+                          <input class="vd-input" [(ngModel)]="control.name" placeholder="Nombre del control">
+                          <textarea class="vd-input" [(ngModel)]="control.statement" placeholder="Descripción" rows="2"></textarea>
+                          <select class="vd-select" [(ngModel)]="control.criticality">
+                            <option value="critico">Crítico</option>
+                            <option value="alto">Alto</option>
+                            <option value="medio">Medio</option>
+                            <option value="bajo">Bajo</option>
+                          </select>
+                          <div style="display:flex;gap:0.5rem">
+                            <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="saveControl(control)">Guardar</button>
+                            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="cancelEditingControl()">Cancelar</button>
+                          </div>
+                        </div>
+                      } @else {
+                        <div>
+                          <div>{{ control.name }}</div>
+                          <small style="color:#64748b">{{ control.statement }}</small>
+                          <span class="vd-badge" [class]="'vd-badge-' + control.criticality">{{ control.criticality }}</span>
+                        </div>
+                      }
+                    </td>
                     <td><select class="vd-select" [ngModel]="getMaturity(control.id)" (ngModelChange)="setMaturity(control.id, $event)"><option [ngValue]="0">Sin evaluar</option><option [ngValue]="1">1 - Inexistente</option><option [ngValue]="2">2 - Inicial</option><option [ngValue]="3">3 - Definido</option><option [ngValue]="4">4 - Gestionado</option><option [ngValue]="5">5 - Optimizado</option></select></td>
                     <td><input class="vd-input" placeholder="Hallazgo..." [ngModel]="getFinding(control.id)" (ngModelChange)="setFinding(control.id, $event)"></td>
+                    <td>
+                      @if (editingControl() !== control.id) {
+                        <div style="display:flex;gap:0.25rem">
+                          <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="startEditingControl(control.id)" title="Editar">✏️</button>
+                          <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="deleteControl(control.id)" title="Eliminar">🗑️</button>
+                        </div>
+                      }
+                    </td>
+                  </tr>
+                }
+                <!-- Add new control row -->
+                @if (addingControlToDomain() === domain.id) {
+                  <tr class="adding-control-row">
+                    <td colspan="5">
+                      <div style="display:flex;flex-direction:column;gap:0.75rem;padding:1rem;background:#f8fafc;border-radius:8px">
+                        <h4>Agregar Nuevo Control</h4>
+                        <input #newControlName class="vd-input" placeholder="Nombre del control">
+                        <textarea #newControlStatement class="vd-input" placeholder="Descripción del control" rows="2"></textarea>
+                        <select #newControlCriticality class="vd-select">
+                          <option value="critico">Crítico</option>
+                          <option value="alto">Alto</option>
+                          <option value="medio" selected>Medio</option>
+                          <option value="bajo">Bajo</option>
+                        </select>
+                        <div style="display:flex;gap:0.5rem">
+                          <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="addControl(domain.id, {name: newControlName.value, statement: newControlStatement.value, criticality: newControlCriticality.value}); newControlName.value=''; newControlStatement.value=''">Agregar</button>
+                          <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="cancelAddingControl()">Cancelar</button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                } @else {
+                  <tr>
+                    <td colspan="5" style="text-align:center;padding:1rem">
+                      <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="startAddingControl(domain.id)">+ Agregar Control</button>
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -379,6 +438,11 @@ export class ProjectWizardComponent implements OnInit {
   generatingDeliverables = signal(false);
   generatingDeliverableContent = signal<number | null>(null); // Track which deliverable is being generated
 
+  // Control editing signals
+  editingControl = signal<number | null>(null);
+  addingControlToDomain = signal<number | null>(null);
+  editingDomain = signal<number | null>(null);
+
   manualLargeScale: boolean | null = null;
   showDeliverables = false;
   deliverableTab: 'pending' | 'generated' = 'pending';
@@ -541,6 +605,66 @@ export class ProjectWizardComponent implements OnInit {
       },
       error: () => alert('Error al descargar el PDF del informe ejecutivo.')
     });
+  }
+
+  // Control editing methods
+  startEditingControl(controlId: number): void { this.editingControl.set(controlId); }
+  cancelEditingControl(): void { this.editingControl.set(null); }
+  saveControl(control: Control): void {
+    this.api.updateControl(control.id, {
+      name: control.name,
+      statement: control.statement,
+      expected_evidence: control.expected_evidence,
+      criticality: control.criticality
+    }).subscribe({
+      next: () => {
+        this.editingControl.set(null);
+        this.loadEvaluation();
+      },
+      error: () => alert('Error al guardar el control')
+    });
+  }
+  deleteControl(controlId: number): void {
+    if (!confirm('¿Estás seguro de eliminar este control? Esta acción no se puede deshacer.')) return;
+    this.api.deleteControl(controlId).subscribe({
+      next: () => this.loadEvaluation(),
+      error: (err) => alert(err.error?.error || 'Error al eliminar el control')
+    });
+  }
+  startAddingControl(domainId: number): void { this.addingControlToDomain.set(domainId); }
+  cancelAddingControl(): void { this.addingControlToDomain.set(null); }
+  addControl(domainId: number, newControl: {name: string, statement: string, criticality: string}): void {
+    const domain = this.domains().find(d => d.id === domainId);
+    if (!domain) return;
+    const nextOrder = domain.controls.length + 1;
+    const nextCode = this.generateNextControlCode(domain);
+    const validCriticality = ['critico', 'alto', 'medio', 'bajo'].includes(newControl.criticality)
+      ? (newControl.criticality as 'critico' | 'alto' | 'medio' | 'bajo')
+      : 'medio';
+    this.api.createControl({
+      domain_id: domainId,
+      code: nextCode,
+      name: newControl.name || 'Nuevo Control',
+      statement: newControl.statement || '',
+      expected_evidence: '',
+      criticality: validCriticality,
+      order: nextOrder
+    }).subscribe({
+      next: () => {
+        this.addingControlToDomain.set(null);
+        this.loadEvaluation();
+      },
+      error: () => alert('Error al crear el control')
+    });
+  }
+  private generateNextControlCode(domain: ControlDomain): string {
+    const prefix = domain.code;
+    const existingCodes = domain.controls.map(c => c.code);
+    let nextNum = 1;
+    while (existingCodes.includes(`${prefix}-${String(nextNum).padStart(3, '0')}`)) {
+      nextNum++;
+    }
+    return `${prefix}-${String(nextNum).padStart(3, '0')}`;
   }
 
   generateActionPlan(): void { this.api.generateActionPlan(this.projectId).subscribe({ next: (res: { action_items: ActionItem[] }) => { this.actionItems.set(res.action_items); this.goToStep(4); } }); }

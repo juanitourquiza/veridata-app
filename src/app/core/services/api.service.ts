@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../environment';
-import { Project, Evaluation, Gap, ActionItem, ExecutiveReport, ControlDomain, PaginatedResponse, Framework, Deliverable, User } from '../models/models';
+import { Project, Evaluation, Gap, ActionItem, ExecutiveReport, ControlDomain, PaginatedResponse, Framework, Deliverable, User, Control } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -46,6 +46,11 @@ export class ApiService {
     // Frameworks
     getFrameworks(): Observable<Framework[]> { return this.http.get<Framework[]>(`${this.base}/admin/frameworks`); }
     getControls(frameworkId: number): Observable<ControlDomain[]> { return this.http.get<ControlDomain[]>(`${this.base}/admin/frameworks/${frameworkId}/controls`); }
+
+    // Controls CRUD (for inline editing in evaluation)
+    createControl(data: { domain_id: number; code: string; name: string; statement?: string; expected_evidence?: string; criticality?: string; order?: number }): Observable<Control> { return this.http.post<Control>(`${this.base}/admin/controls`, data); }
+    updateControl(controlId: number, data: Partial<Control>): Observable<Control> { return this.http.put<Control>(`${this.base}/admin/controls/${controlId}`, data); }
+    deleteControl(controlId: number): Observable<void> { return this.http.delete<void>(`${this.base}/admin/controls/${controlId}`); }
 
     // Users (for assignment dropdowns)
     getUsers(): Observable<{ data: User[] }> { return this.http.get<{ data: User[] }>(`${this.base}/users`); }
