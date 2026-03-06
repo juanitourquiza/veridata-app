@@ -91,6 +91,7 @@ import {
             <span class="vd-badge vd-badge-media">{{ gapCountByImpact('media') }} Media</span>
             <span class="vd-badge vd-badge-baja">{{ gapCountByImpact('baja') }} Baja</span>
           </div>
+          @if (gaps().length === 0) { <small style="color:#64748b; display:block; margin-top:0.5rem;">Haz clic en "Generar Brechas" abajo ↓</small> }
         </div>
       </div>
 
@@ -477,12 +478,18 @@ export class ProjectWizardComponent implements OnInit {
       next: (res: { gaps: Gap[] }) => {
         this.gaps.set(res.gaps);
         this.generatingGaps.set(false);
+        if (res.gaps.length === 0) {
+          alert('No se detectaron brechas. Esto ocurre cuando todos los controles tienen madurez 4 o 5 (Gestionado/Optimizado).');
+        }
         // Reload project to get updated large_scale + dpo_required
         this.api.getProject(this.projectId).subscribe({
           next: (p: Project) => { this.project.large_scale = p.large_scale; }
         });
       },
-      error: () => this.generatingGaps.set(false)
+      error: (e) => {
+        this.generatingGaps.set(false);
+        alert('Error al generar brechas: ' + (e.error?.error || 'Error desconocido'));
+      }
     });
   }
 
