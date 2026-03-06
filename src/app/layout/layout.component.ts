@@ -4,6 +4,8 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
 import { environment } from '../core/environment';
 
+// Layout component without WhatsApp CTA and dark mode toggle
+
 @Component({
   selector: 'app-layout',
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
