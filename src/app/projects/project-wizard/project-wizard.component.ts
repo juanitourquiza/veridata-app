@@ -348,7 +348,7 @@ export class ProjectWizardComponent implements OnInit {
   project: { name: string; description: string; framework_id: number; data_subjects_count: number; data_categories: string[]; large_scale?: boolean } = { name: '', description: '', framework_id: 0, data_subjects_count: 0, data_categories: [] };
   frameworks = signal<Framework[]>([]);
   domains = signal<ControlDomain[]>([]);
-  evaluationMap = new Map<number, { maturity_level: number; findings: string }>();
+  evaluationMap = signal<Map<number, { maturity_level: number; findings: string }>>(new Map());
   expandedDomains = new Set<number>();
 
   gaps = signal<Gap[]>([]);
@@ -373,7 +373,7 @@ export class ProjectWizardComponent implements OnInit {
   dataCategories = ['Identificación', 'Contacto', 'Financieros', 'Salud', 'Biométricos', 'Geolocalización', 'Ideología', 'Orientación sexual', 'Origen étnico', 'Antecedentes penales', 'Datos de menores'];
 
   totalControls = computed(() => this.domains().reduce((sum: number, d: ControlDomain) => sum + d.controls.length, 0));
-  evaluatedCount = computed(() => [...this.evaluationMap.values()].filter((e: { maturity_level: number }) => e.maturity_level > 0).length);
+  evaluatedCount = computed(() => [...this.evaluationMap().values()].filter((e: { maturity_level: number }) => e.maturity_level > 0).length);
   evaluationProgress = computed(() => this.totalControls() ? (this.evaluatedCount() / this.totalControls()) * 100 : 0);
 
   constructor(private api: ApiService, private auth: AuthService, private route: ActivatedRoute, private router: Router) { }
@@ -398,10 +398,22 @@ export class ProjectWizardComponent implements OnInit {
   hasSpecialCategory(): boolean { return ['Salud', 'Biométricos', 'Ideología', 'Orientación sexual', 'Origen étnico', 'Antecedentes penales', 'Datos de menores'].some((c: string) => this.project.data_categories.includes(c)); }
 
   toggleDomain(id: number): void { this.expandedDomains.has(id) ? this.expandedDomains.delete(id) : this.expandedDomains.add(id); }
-  getMaturity(controlId: number): number { return this.evaluationMap.get(controlId)?.maturity_level ?? 0; }
-  getFinding(controlId: number): string { return this.evaluationMap.get(controlId)?.findings ?? ''; }
-  setMaturity(controlId: number, val: number): void { const e = this.evaluationMap.get(controlId) || { maturity_level: 0, findings: '' }; e.maturity_level = val; this.evaluationMap.set(controlId, e); }
-  setFinding(controlId: number, val: string): void { const e = this.evaluationMap.get(controlId) || { maturity_level: 0, findings: '' }; e.findings = val; this.evaluationMap.set(controlId, e); }
+  getMaturity(controlId: number): number { return this.evaluationMap().get(controlId)?.maturity_level ?? 0; }
+  getFinding(controlId: number): string { return this.evaluationMap().get(controlId)?.findings ?? ''; }
+  setMaturity(controlId: number, val: number): void {
+    const newMap = new Map(this.evaluationMap());
+    const e = newMap.get(controlId) || { maturity_level: 0, findings: '' };
+    e.maturity_level = val;
+    newMap.set(controlId, e);
+    this.evaluationMap.set(newMap);
+  }
+  setFinding(controlId: number, val: string): void {
+    const newMap = new Map(this.evaluationMap());
+    const e = newMap.get(controlId) || { maturity_level: 0, findings: '' };
+    e.findings = val;
+    newMap.set(controlId, e);
+    this.evaluationMap.set(newMap);
+  }
 
   goToStep(step: number): void { this.currentStep.set(step); }
 
@@ -438,7 +450,9 @@ export class ProjectWizardComponent implements OnInit {
       this.api.getControls(this.project.framework_id).subscribe({ next: (d: ControlDomain[]) => this.domains.set(d) });
       this.api.getEvaluation(this.projectId).subscribe({
         next: (res: { evaluations: Evaluation[]; maturity_by_domain: DomainMaturity[]; global_maturity: number }) => {
-          res.evaluations.forEach((ev: Evaluation) => this.evaluationMap.set(ev.control_id, { maturity_level: ev.maturity_level, findings: ev.findings || '' }));
+          const newMap = new Map<number, { maturity_level: number; findings: string }>();
+          res.evaluations.forEach((ev: Evaluation) => newMap.set(ev.control_id, { maturity_level: ev.maturity_level, findings: ev.findings || '' }));
+          this.evaluationMap.set(newMap);
           this.domainMaturity.set(res.maturity_by_domain); this.globalMaturity.set(res.global_maturity);
         }
       });
@@ -450,7 +464,7 @@ export class ProjectWizardComponent implements OnInit {
 
   saveEvaluation(): void {
     this.saving.set(true);
-    const evals = [...this.evaluationMap.entries()].filter(([, v]) => v.maturity_level > 0).map(([controlId, v]) => ({ control_id: controlId, maturity_level: v.maturity_level, findings: v.findings || null }));
+    const evals = [...this.evaluationMap().entries()].filter(([, v]) => v.maturity_level > 0).map(([controlId, v]) => ({ control_id: controlId, maturity_level: v.maturity_level, findings: v.findings || null }));
     this.api.saveEvaluation(this.projectId, evals).subscribe({
       next: () => { this.saving.set(false); this.loadEvaluation(); this.goToStep(3); },
       error: () => this.saving.set(false),
