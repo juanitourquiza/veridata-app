@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
+import { environment } from '../core/environment';
 
 @Component({
-    selector: 'app-login',
-    imports: [CommonModule, FormsModule, RouterLink],
-    template: `
+  selector: 'app-login',
+  imports: [CommonModule, FormsModule, RouterLink],
+  template: `
     <div class="login-page">
       <div class="login-left">
         <div class="brand">
@@ -36,12 +37,13 @@ import { AuthService } from '../core/services/auth.service';
             <button type="submit" class="vd-btn vd-btn-primary login-btn" [disabled]="loading()">{{ loading() ? 'Ingresando...' : 'Ingresar' }}</button>
           </form>
           <p class="register-link">¿No tienes cuenta? <a routerLink="/register">Crear cuenta</a></p>
-          <div class="demo-credentials"><p><strong>Demo:</strong></p><small>Admin: admin&#64;veridata.io / password123</small><br><small>Senior: senior&#64;veridata.io / password123</small></div>
+          <div class="demo-credentials"><p><strong>Demo:</strong></p><small>Admin: admin&#64;veridata.io / password123</small><br><small>Senior: senior&#64;veridata.io / password123</small><br><small>Junior: junior&#64;veridata.io / password123</small></div>
+          <div class="version-tag">v{{ version }}</div>
         </div>
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .login-page { display: flex; min-height: 100vh; }
     .login-left { flex: 1; background: linear-gradient(135deg, #0d1321, #1a2540, #20283e); color: white; padding: 3rem; display: flex; flex-direction: column; justify-content: center; }
     .brand { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
@@ -63,22 +65,24 @@ import { AuthService } from '../core/services/auth.service';
     .register-link a { color: #5687f3; font-weight: 600; text-decoration: none; }
     .demo-credentials { margin-top: 1.5rem; padding: 0.75rem; background: #f1f5f9; border-radius: 8px; font-size: 0.75rem; color: #64748b; }
     .demo-credentials p { margin: 0 0 0.25rem; }
+    .version-tag { text-align: center; margin-top: 1rem; font-size: 0.6875rem; color: #94a3b8; font-weight: 500; letter-spacing: 0.05em; }
     @media (max-width: 768px) { .login-page { flex-direction: column; } .login-left { padding: 2rem; } .features { display: none; } }
   `],
 })
 export class LoginComponent {
-    email = '';
-    password = '';
-    error = signal('');
-    loading = signal(false);
-    constructor(private authService: AuthService, private router: Router) {
-        if (this.authService.isAuthenticated()) this.router.navigate(['/projects']);
-    }
-    onLogin(): void {
-        this.loading.set(true); this.error.set('');
-        this.authService.login(this.email, this.password).subscribe({
-            next: () => { this.loading.set(false); this.router.navigate(['/projects']); },
-            error: (err: { error?: { message?: string } }) => { this.loading.set(false); this.error.set(err.error?.message || 'Error al iniciar sesión'); },
-        });
-    }
+  email = '';
+  password = '';
+  version = environment.version;
+  error = signal('');
+  loading = signal(false);
+  constructor(private authService: AuthService, private router: Router) {
+    if (this.authService.isAuthenticated()) this.router.navigate(['/projects']);
+  }
+  onLogin(): void {
+    this.loading.set(true); this.error.set('');
+    this.authService.login(this.email, this.password).subscribe({
+      next: () => { this.loading.set(false); this.router.navigate(['/projects']); },
+      error: (err: { error?: { message?: string } }) => { this.loading.set(false); this.error.set(err.error?.message || 'Error al iniciar sesión'); },
+    });
+  }
 }
