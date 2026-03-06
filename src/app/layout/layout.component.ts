@@ -2,14 +2,15 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
+import { environment } from '../core/environment';
 
 @Component({
-    selector: 'app-layout',
-    imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
-    template: `
+  selector: 'app-layout',
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  template: `
     <div class="layout">
       <aside class="sidebar">
-        <div class="sidebar-brand"><svg viewBox="0 0 40 40" fill="none" width="32" height="32"><path d="M20 4L6 12v16l14 8 14-8V12L20 4z" fill="#5687f3" opacity="0.2"/><path d="M20 4L6 12v16l14 8 14-8V12L20 4z" stroke="#5687f3" stroke-width="2" fill="none"/><path d="M14 20l4 4 8-8" stroke="#5687f3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="brand-text">Veridata</span></div>
+        <div class="sidebar-brand"><svg viewBox="0 0 40 40" fill="none" width="32" height="32"><path d="M20 4L6 12v16l14 8 14-8V12L20 4z" fill="#5687f3" opacity="0.2"/><path d="M20 4L6 12v16l14 8 14-8V12L20 4z" stroke="#5687f3" stroke-width="2" fill="none"/><path d="M14 20l4 4 8-8" stroke="#5687f3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="brand-info"><span class="brand-text">Veridata</span><span class="brand-version">v{{ version }}</span></div></div>
         <nav class="sidebar-nav">
           <a routerLink="/projects" routerLinkActive="active" class="nav-item"><span class="nav-icon">📁</span><span>Proyectos</span></a>
         </nav>
@@ -21,11 +22,13 @@ import { AuthService } from '../core/services/auth.service';
       <main class="main-content"><router-outlet /></main>
     </div>
   `,
-    styles: [`
+  styles: [`
     .layout { display: flex; min-height: 100vh; }
     .sidebar { width: 240px; background: linear-gradient(180deg, #0d1321, #121b30); color: white; display: flex; flex-direction: column; position: fixed; inset: 0; right: auto; z-index: 30; }
     .sidebar-brand { display: flex; align-items: center; gap: 0.625rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
     .brand-text { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
+    .brand-info { display: flex; flex-direction: column; }
+    .brand-version { font-size: 0.625rem; color: #5a6385; font-weight: 500; }
     .sidebar-nav { flex: 1; padding: 1rem 0.75rem; }
     .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.875rem; color: #8890a8; text-decoration: none; border-radius: 8px; font-size: 0.875rem; transition: all 0.2s; margin-bottom: 0.25rem; }
     .nav-item:hover { background: rgba(86,135,243,0.1); color: #c4c8d6; }
@@ -44,5 +47,6 @@ import { AuthService } from '../core/services/auth.service';
   `],
 })
 export class LayoutComponent {
-    constructor(public auth: AuthService) { }
+  version = environment.version;
+  constructor(public auth: AuthService) { }
 }

@@ -2,15 +2,16 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Project } from '../../core/models/models';
 
 @Component({
-    selector: 'app-project-list',
-    imports: [CommonModule, RouterLink],
-    template: `
+  selector: 'app-project-list',
+  imports: [CommonModule, RouterLink],
+  template: `
     <div class="page-header">
       <div><h1>Proyectos</h1><p class="subtitle">Gestiona tus evaluaciones de cumplimiento</p></div>
-      <a routerLink="/projects/new" class="vd-btn vd-btn-primary">+ Nuevo Proyecto</a>
+      @if (auth.canCreateProjects()) { <a routerLink="/projects/new" class="vd-btn vd-btn-primary">+ Nuevo Proyecto</a> }
     </div>
     @if (loading()) {
       <div class="loading"><div class="spinner"></div><p>Cargando proyectos...</p></div>
@@ -19,7 +20,7 @@ import { Project } from '../../core/models/models';
         <div class="empty-icon">📁</div>
         <h3>Sin proyectos aún</h3>
         <p>Crea tu primer proyecto de evaluación de cumplimiento</p>
-        <a routerLink="/projects/new" class="vd-btn vd-btn-primary">Crear primer proyecto</a>
+        @if (auth.canCreateProjects()) { <a routerLink="/projects/new" class="vd-btn vd-btn-primary">Crear primer proyecto</a> }
       </div>
     } @else {
       <div class="project-grid">
@@ -35,7 +36,7 @@ import { Project } from '../../core/models/models';
       </div>
     }
   `,
-    styles: [`
+  styles: [`
     .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; }
     h1 { margin: 0; font-size: 1.5rem; }
     .subtitle { color: #64748b; font-size: 0.875rem; margin: 0.25rem 0 0; }
@@ -60,9 +61,9 @@ import { Project } from '../../core/models/models';
   `],
 })
 export class ProjectListComponent implements OnInit {
-    projects = signal<Project[]>([]);
-    loading = signal(true);
-    constructor(private api: ApiService) { }
-    ngOnInit(): void { this.api.getProjects().subscribe({ next: (res) => { this.projects.set(res.data); this.loading.set(false); }, error: () => this.loading.set(false) }); }
-    statusBadge(status: string): string { return status === 'completed' ? 'bajo' : status === 'in_progress' ? 'medio' : status === 'draft' ? 'alto' : 'critico'; }
+  projects = signal<Project[]>([]);
+  loading = signal(true);
+  constructor(private api: ApiService, public auth: AuthService) { }
+  ngOnInit(): void { this.api.getProjects().subscribe({ next: (res) => { this.projects.set(res.data); this.loading.set(false); }, error: () => this.loading.set(false) }); }
+  statusBadge(status: string): string { return status === 'completed' ? 'bajo' : status === 'in_progress' ? 'medio' : status === 'draft' ? 'alto' : 'critico'; }
 }

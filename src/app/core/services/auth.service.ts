@@ -13,6 +13,7 @@ export class AuthService {
     currentUser = signal<User | null>(this.getStoredUser());
     isAuthenticated = computed(() => !!this.currentUser() && !!this.getToken());
     userRole = computed(() => this.currentUser()?.roles?.[0]?.name ?? 'junior');
+    canCreateProjects = computed(() => this.userRole() !== 'junior');
 
     constructor(private http: HttpClient, private router: Router) { }
 

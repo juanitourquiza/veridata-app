@@ -1,162 +1,49 @@
-# Veridata App
+# Veridata App — v1.0.0
 
-**Client-facing frontend for the Veridata SaaS platform** — built with Angular 20+ as a standalone project.
+Plataforma de evaluación de cumplimiento de protección de datos personales.
 
-> **[Leer en Español](#aplicación-veridata)**
+## Stack Tecnológico
 
----
+- **Frontend:** Angular 19 (standalone components, signals)
+- **Estilos:** CSS vanilla con design system personalizado
+- **API:** REST con token Bearer (Laravel Sanctum)
 
-## Overview
+## Credenciales de prueba
 
-Veridata App is the primary frontend where organizations evaluate their personal data protection compliance. It provides a 4-step guided wizard to assess maturity across regulatory controls, generate gap reports, action plans, and AI-powered executive summaries.
+| Rol | Email | Contraseña | Permisos |
+|-----|-------|------------|----------|
+| Admin | admin@veridata.io | password123 | Acceso completo |
+| Senior | senior@veridata.io | password123 | Crear proyectos, evaluar, generar reportes, aprobar |
+| Junior | junior@veridata.io | password123 | Ver proyectos, evaluar, generar reportes (no crea proyectos) |
 
-## Tech Stack
-
-| Component | Tech |
-|-----------|------|
-| Framework | Angular 20+ (standalone) |
-| Styling | TailwindCSS v4 + custom design system |
-| Auth | Sanctum tokens (via HTTP interceptor) |
-| State | Angular Signals |
-| Routing | Lazy-loaded routes with auth guard |
-| Typography | Inter (Google Fonts) |
-
-## Features
-
-- 🔐 **Login / Register** — Sanctum token auth with role-based access
-- 📋 **Project Wizard (4 steps)**
-  1. **Project Info** — Name, framework, data categories, subjects count
-  2. **Evaluation** — Rate maturity (0-5) per control across 11 domains
-  3. **Results** — Global maturity score, domain breakdown, gap report, AI executive summary
-  4. **Action Plan** — Generated remediation tasks with priorities and status tracking
-- 📊 **Project List** — Overview of all projects with status badges
-- 🔗 **Shared Links** — Public read-only access for stakeholders
-
-## Project Structure
-
-```
-src/app/
-├── core/
-│   ├── environment.ts          API URL config
-│   ├── guards/                 auth.guard.ts
-│   ├── interceptors/           auth.interceptor.ts (Sanctum token)
-│   ├── models/                 models.ts (TypeScript interfaces)
-│   └── services/
-│       ├── api.service.ts      All HTTP calls
-│       └── auth.service.ts     Login, register, token management
-├── auth/
-│   ├── login.component.ts      Split-screen login page
-│   └── register.component.ts   Registration form
-├── layout/
-│   └── layout.component.ts     Sidebar shell with navigation
-└── projects/
-    ├── project-list/           Project list with cards
-    └── project-wizard/         4-step wizard (evaluation flow)
-```
-
-## Prerequisites
-
-- Node.js 18+
-- npm 9+
-- Angular CLI (`npx @angular/cli`)
-
-## Installation
+## Desarrollo local
 
 ```bash
-git clone <repo-url> veridata-app
-cd veridata-app
 npm install
+ng serve --port 4200
 ```
 
-## Development
+## Build de producción
 
 ```bash
-# Start dev server (port 4200)
-npx ng serve
-
-# Build for production
-npx ng build --configuration=production
+ng build --configuration=production
 ```
 
-The app connects to the API at `http://localhost:8000/api` by default. Change this in `src/app/core/environment.ts`.
+Los archivos se generan en `dist/veridata-app/browser/`.
 
-## API Connection
+## Funcionalidades (v1.0.0)
 
-This app consumes the **veridata-api** REST backend. Make sure it's running:
-```bash
-cd ../veridata-api && php artisan serve
-```
+1. **Wizard de proyecto:** Información → Evaluación → Resultados → Plan de Acción
+2. **Evaluación de controles:** Escala 1-5 (Inexistente a Optimizado)
+3. **Informe GAP:** Agrupado por dominio, clasificación Baja/Media/Alta
+4. **Gran Escala:** Auto-determinado por titulares + categorías sensibles
+5. **Plan de Acción:** Prioridad, responsable y fecha objetivo editables
+6. **Informe ejecutivo IA:** Generado con IA o reglas base
+7. **Gestor de Entregables:** Templates por dominio LOPDP Ecuador
+8. **Roles:** Admin / Senior / Junior con permisos diferenciados
 
-## Design System
+## URLs de producción
 
-The `.vd-*` CSS classes provide a consistent design language:
-
-| Class | Purpose |
-|-------|---------|
-| `.vd-card` | Content container with shadow |
-| `.vd-btn` `.vd-btn-primary` | Primary action button |
-| `.vd-btn-secondary` | Outlined button |
-| `.vd-input` | Text input |
-| `.vd-select` | Dropdown select |
-| `.vd-label` | Form label |
-| `.vd-badge` | Status/priority badge |
-| `.vd-table` | Data table |
-| `.vd-progress-bar` | Progress indicator |
-| `.vd-stepper` | Multi-step wizard |
-
----
-
-# Aplicación Veridata
-
-**Frontend para clientes de la plataforma SaaS Veridata** — construido con Angular 20+ como proyecto standalone.
-
-## Descripción
-
-Veridata App es el frontend principal donde las organizaciones evalúan su cumplimiento de protección de datos personales. Provee un asistente guiado de 4 pasos para evaluar la madurez en controles regulatorios, generar informes de brechas, planes de acción y resúmenes ejecutivos con IA.
-
-## Funcionalidades
-
-- 🔐 **Login / Registro** — Autenticación Sanctum con roles
-- 📋 **Asistente de Proyecto (4 pasos)**
-  1. **Info del Proyecto** — Nombre, marco normativo, categorías de datos
-  2. **Evaluación** — Calificar madurez (0-5) por control en 11 dominios
-  3. **Resultados** — Madurez global, desglose por dominio, informe GAP, resumen ejecutivo IA
-  4. **Plan de Acción** — Tareas de remediación con prioridades y seguimiento
-- 📊 **Lista de Proyectos** — Vista general con badges de estado
-- 🔗 **Enlaces compartidos** — Acceso público de solo lectura
-
-## Requisitos
-
-- Node.js 18+
-- npm 9+
-
-## Instalación
-
-```bash
-git clone <repo-url> veridata-app
-cd veridata-app
-npm install
-```
-
-## Desarrollo
-
-```bash
-# Iniciar servidor de desarrollo (puerto 4200)
-npx ng serve
-
-# Compilar para producción
-npx ng build --configuration=production
-```
-
-La app se conecta a la API en `http://localhost:8000/api`. Cambia esto en `src/app/core/environment.ts`.
-
-## Conexión con API
-
-Esta app consume el backend **veridata-api**. Asegúrate de que esté corriendo:
-```bash
-cd ../veridata-api && php artisan serve
-```
-
-## Licencia
-
-Propietario / Proprietary
+- App: https://phpstack-1212383-6257721.cloudwaysapps.com
+- Admin: https://phpstack-1212383-6257728.cloudwaysapps.com
+- API: https://phplaravel-1212383-6257708.cloudwaysapps.com
