@@ -91,7 +91,6 @@ import {
             <span class="vd-badge vd-badge-media">{{ gapCountByImpact('media') }} Media</span>
             <span class="vd-badge vd-badge-baja">{{ gapCountByImpact('baja') }} Baja</span>
           </div>
-          @if (gaps().length === 0) { <small style="color:#64748b; display:block; margin-top:0.5rem;">Haz clic en "Generar Brechas" abajo ↓</small> }
         </div>
       </div>
 
@@ -193,8 +192,8 @@ import {
             <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="showDeliverables = false">← Salir</button>
           </div>
           <div class="deliv-tabs">
-            <button class="deliv-tab" [class.active]="deliverableTab === 'pending'" (click)="deliverableTab = 'pending'">Pendientes ({{ deliverablesByStatus('pending').length }})</button>
-            <button class="deliv-tab" [class.active]="deliverableTab === 'generated'" (click)="deliverableTab = 'generated'">Generados ({{ deliverablesByStatus('generated').length + deliverablesByStatus('uploaded').length }})</button>
+            <button class="deliv-tab" [class.active]="deliverableTab === 'pending'" (click)="switchDeliverableTab('pending')">Pendientes ({{ deliverablesByStatus('pending').length }})</button>
+            <button class="deliv-tab" [class.active]="deliverableTab === 'generated'" (click)="switchDeliverableTab('generated')">Generados ({{ deliverablesByStatus('generated').length + deliverablesByStatus('uploaded').length }})</button>
           </div>
           @if (deliverables().length === 0) {
             <div style="text-align:center;padding:2rem;color:#64748b">
@@ -437,6 +436,11 @@ export class ProjectWizardComponent implements OnInit {
     return this.deliverables().filter(d => d.status === 'generated' || d.status === 'uploaded');
   }
 
+  switchDeliverableTab(tab: 'pending' | 'generated'): void {
+    this.deliverableTab = tab;
+    this.selectedDeliverable.set(null);
+  }
+
   saveProject(): void {
     this.saving.set(true);
     const obs = this.isEdit ? this.api.updateProject(this.projectId, this.project) : this.api.createProject(this.project);
@@ -478,18 +482,12 @@ export class ProjectWizardComponent implements OnInit {
       next: (res: { gaps: Gap[] }) => {
         this.gaps.set(res.gaps);
         this.generatingGaps.set(false);
-        if (res.gaps.length === 0) {
-          alert('No se detectaron brechas. Esto ocurre cuando todos los controles tienen madurez 4 o 5 (Gestionado/Optimizado).');
-        }
         // Reload project to get updated large_scale + dpo_required
         this.api.getProject(this.projectId).subscribe({
           next: (p: Project) => { this.project.large_scale = p.large_scale; }
         });
       },
-      error: (e) => {
-        this.generatingGaps.set(false);
-        alert('Error al generar brechas: ' + (e.error?.error || 'Error desconocido'));
-      }
+      error: () => this.generatingGaps.set(false)
     });
   }
 
