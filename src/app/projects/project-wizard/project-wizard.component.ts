@@ -79,7 +79,7 @@ import {
     @if (currentStep() === 3) {
       <!-- Metrics Summary -->
       <div class="results-grid">
-        <div class="vd-card metric"><div class="metric-value">{{ globalMaturity() | number:'1.1-1' }}</div><div class="metric-label">Madurez Global</div><div class="metric-bar vd-progress-bar"><div class="vd-progress-fill" [style.width.%]="globalMaturity() * 20"></div></div></div>
+        <div class="vd-card metric"><div class="metric-value">{{ globalMaturityPercent() | number:'1.0-0' }}%</div><div class="metric-label">Madurez Global</div><div class="metric-bar vd-progress-bar"><div class="vd-progress-fill" [style.width.%]="globalMaturityPercent()"></div></div></div>
         <div class="vd-card metric"><div class="metric-value" [style.color]="isLargeScale() ? '#ef4444' : '#22c55e'">{{ isLargeScale() ? 'Sí' : 'No' }}</div><div class="metric-label">Gran Escala</div>
           <div class="large-scale-toggle"><label class="chip small" [class.selected]="manualLargeScale !== null"><input type="checkbox" [checked]="manualLargeScale !== null" (change)="toggleManualLargeScale()"><span>Definir manualmente</span></label>
             @if (manualLargeScale !== null) { <select class="vd-select" style="max-width:100px;margin-top:0.5rem" [(ngModel)]="manualLargeScale"><option [ngValue]="true">Sí</option><option [ngValue]="false">No</option></select> }
@@ -98,7 +98,7 @@ import {
       <div class="vd-card">
         <h3>📊 Madurez por Dominio</h3>
         @for (dm of domainMaturity(); track dm.domain_id) {
-          <div class="domain-score"><div class="ds-label"><span>{{ dm.domain_code }}</span><strong>{{ dm.avg_maturity | number:'1.1-1' }}</strong></div><div class="vd-progress-bar"><div class="vd-progress-fill" [style.width.%]="dm.avg_maturity * 20" [style.background]="dm.avg_maturity >= 4 ? 'linear-gradient(90deg,#22c55e,#4ade80)' : dm.avg_maturity >= 3 ? 'linear-gradient(90deg,#5687f3,#7ba3f7)' : dm.avg_maturity >= 2 ? 'linear-gradient(90deg,#f59e0b,#fbbf24)' : 'linear-gradient(90deg,#ef4444,#f87171)'"></div></div></div>
+          <div class="domain-score"><div class="ds-label"><span>{{ dm.domain_code }}</span><strong>{{ (dm.avg_maturity / 5) * 100 | number:'1.0-0' }}%</strong></div><div class="vd-progress-bar"><div class="vd-progress-fill" [style.width.%]="(dm.avg_maturity / 5) * 100" [style.background]="dm.avg_maturity >= 4 ? 'linear-gradient(90deg,#22c55e,#4ade80)' : dm.avg_maturity >= 3 ? 'linear-gradient(90deg,#5687f3,#7ba3f7)' : dm.avg_maturity >= 2 ? 'linear-gradient(90deg,#f59e0b,#fbbf24)' : 'linear-gradient(90deg,#ef4444,#f87171)'"></div></div></div>
         }
       </div>
 
@@ -375,6 +375,7 @@ export class ProjectWizardComponent implements OnInit {
   totalControls = computed(() => this.domains().reduce((sum: number, d: ControlDomain) => sum + d.controls.length, 0));
   evaluatedCount = computed(() => [...this.evaluationMap().values()].filter((e: { maturity_level: number }) => e.maturity_level > 0).length);
   evaluationProgress = computed(() => this.totalControls() ? (this.evaluatedCount() / this.totalControls()) * 100 : 0);
+  globalMaturityPercent = computed(() => (this.globalMaturity() / 5) * 100); // Convertir escala 0-5 a 0-100%
 
   constructor(private api: ApiService, private auth: AuthService, private route: ActivatedRoute, private router: Router) { }
 
