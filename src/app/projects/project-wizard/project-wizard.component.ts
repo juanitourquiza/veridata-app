@@ -138,7 +138,12 @@ import {
 
       <!-- Executive AI Report -->
       <div class="vd-card" style="margin-top:1.25rem">
-        <div class="section-header"><h3>🤖 Informe Ejecutivo IA</h3><button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateAiReport()" [disabled]="generatingReport()">{{ generatingReport() ? 'Generando...' : 'Generar con IA' }}</button></div>
+        <div class="section-header"><h3>🤖 Informe Ejecutivo IA</h3>
+          <div style="display:flex;gap:0.5rem">
+            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadExecutiveReportPdf()" [disabled]="!gaps().length">📄 Descargar PDF</button>
+            <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateAiReport()" [disabled]="generatingReport()">{{ generatingReport() ? 'Generando...' : 'Generar con IA' }}</button>
+          </div>
+        </div>
         @if (report()) {
           <div class="report"><div class="report-meta"><span class="vd-badge vd-badge-medio">{{ report()!.generated_by }}</span>@if (report()!.provider) { <span class="vd-badge vd-badge-bajo">{{ report()!.provider }}</span> }</div>
             <h4>Resumen Ejecutivo</h4><p>{{ report()!.executive_summary }}</p>
@@ -519,6 +524,22 @@ export class ProjectWizardComponent implements OnInit {
           alert('Error al generar el reporte: ' + (err.error?.message || 'Inténtalo de nuevo'));
         }
       }
+    });
+  }
+
+  downloadExecutiveReportPdf(): void {
+    this.api.downloadExecutiveReportPdf(this.projectId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `informe_ejecutivo_${this.project.name}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => alert('Error al descargar el PDF del informe ejecutivo.')
     });
   }
 

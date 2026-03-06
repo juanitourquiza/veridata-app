@@ -31,6 +31,7 @@ export class ApiService {
 
     // Reports
     generateExecutiveReport(projectId: number): Observable<ExecutiveReport> { return this.http.post<ExecutiveReport>(`${this.base}/projects/${projectId}/reports/executive-ai`, {}); }
+    downloadExecutiveReportPdf(projectId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/reports/executive-ai/pdf`, { responseType: 'blob' }); }
 
     // Deliverables
     getDeliverables(projectId: number): Observable<{ deliverables: Deliverable[] }> { return this.http.get<{ deliverables: Deliverable[] }>(`${this.base}/projects/${projectId}/deliverables`); }
