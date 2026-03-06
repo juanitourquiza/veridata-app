@@ -180,7 +180,7 @@ import {
           </div>
         }
       </div>
-      <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(3)">← Anterior</button><a routerLink="/projects" class="vd-btn vd-btn-primary">Finalizar ✓</a></div>
+      <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(3)">← Anterior</button><button class="vd-btn vd-btn-primary" (click)="finishProject()">Finalizar ✓</button></div>
     }
 
     <!-- Deliverables Panel (overlay) -->
@@ -530,4 +530,15 @@ export class ProjectWizardComponent implements OnInit {
   }
 
   shareProject(): void { this.api.createSharedLink(this.projectId, 'action_plan').subscribe({ next: (res: { url: string }) => this.sharedUrl.set(res.url) }); }
+
+  finishProject(): void {
+    const pendingDeliverables = this.deliverablesByStatus('pending').length;
+    const pendingActions = this.actionItems().filter(i => i.status === 'pendiente').length;
+
+    if (pendingDeliverables > 0 || pendingActions > 0) {
+      const msg = `Hay elementos pendientes:\n${pendingDeliverables} entregables pendientes\n${pendingActions} acciones pendientes\n\n¿Deseas finalizar de todas formas?`;
+      if (!confirm(msg)) return;
+    }
+    this.router.navigate(['/projects']);
+  }
 }
