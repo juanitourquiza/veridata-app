@@ -199,7 +199,8 @@ import {
       <div class="vd-card" style="margin-top:1.25rem">
         <div class="section-header"><h3>🤖 Informe Ejecutivo IA</h3>
           <div style="display:flex;gap:0.5rem">
-            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadExecutiveReportPdf()" [disabled]="!gaps().length">📄 Descargar PDF</button>
+            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadExecutiveReportPdf()" [disabled]="!gaps().length">📄 PDF</button>
+            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadExecutiveReportWord()" [disabled]="!gaps().length">📝 Word</button>
             <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateAiReport()" [disabled]="generatingReport()">{{ generatingReport() ? 'Generando...' : 'Generar con IA' }}</button>
           </div>
         </div>
@@ -284,7 +285,8 @@ import {
                   @if (!selectedDeliverable()!.content) {
                     <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateDeliverableContent(selectedDeliverable()!.id)" [disabled]="generatingDeliverableContent() === selectedDeliverable()!.id">{{ generatingDeliverableContent() === selectedDeliverable()!.id ? 'Generando...' : '🤖 Generar con IA' }}</button>
                   } @else {
-                    <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadDeliverablePdf(selectedDeliverable()!.id)">📄 Descargar PDF</button>
+                    <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadDeliverablePdf(selectedDeliverable()!.id)">📄 PDF</button>
+                    <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadDeliverableWord(selectedDeliverable()!.id)">📝 Word</button>
                     <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateDeliverableContent(selectedDeliverable()!.id)" [disabled]="generatingDeliverableContent() === selectedDeliverable()!.id">🔄 Regenerar</button>
                   }
                 </div>
@@ -607,6 +609,22 @@ export class ProjectWizardComponent implements OnInit {
     });
   }
 
+  downloadExecutiveReportWord(): void {
+    this.api.downloadExecutiveReportWord(this.projectId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `informe_ejecutivo_${this.project.name}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => alert('Error al descargar el Word del informe ejecutivo.')
+    });
+  }
+
   // Control editing methods
   startEditingControl(controlId: number): void { this.editingControl.set(controlId); }
   cancelEditingControl(): void { this.editingControl.set(null); }
@@ -729,6 +747,22 @@ export class ProjectWizardComponent implements OnInit {
         window.URL.revokeObjectURL(url);
       },
       error: () => alert('Error al descargar el PDF. Asegúrate de que el contenido esté generado.')
+    });
+  }
+
+  downloadDeliverableWord(delivId: number): void {
+    this.api.downloadDeliverableWord(this.projectId, delivId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `entregable_${delivId}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => alert('Error al descargar el Word. Asegúrate de que el contenido esté generado.')
     });
   }
 

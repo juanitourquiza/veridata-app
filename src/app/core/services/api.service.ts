@@ -32,6 +32,7 @@ export class ApiService {
     // Reports
     generateExecutiveReport(projectId: number): Observable<ExecutiveReport> { return this.http.post<ExecutiveReport>(`${this.base}/projects/${projectId}/reports/executive-ai`, {}); }
     downloadExecutiveReportPdf(projectId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/reports/executive-ai/pdf`, { responseType: 'blob' }); }
+    downloadExecutiveReportWord(projectId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/reports/executive-ai/word`, { responseType: 'blob' }); }
 
     // Deliverables
     getDeliverables(projectId: number): Observable<{ deliverables: Deliverable[] }> { return this.http.get<{ deliverables: Deliverable[] }>(`${this.base}/projects/${projectId}/deliverables`); }
@@ -39,6 +40,7 @@ export class ApiService {
     updateDeliverable(projectId: number, delivId: number, data: Partial<Deliverable>): Observable<{ deliverable: Deliverable }> { return this.http.put<{ deliverable: Deliverable }>(`${this.base}/projects/${projectId}/deliverables/${delivId}`, data); }
     generateDeliverableContent(projectId: number, delivId: number): Observable<{ deliverable: Deliverable; generated_by: string; provider?: string }> { return this.http.post<{ deliverable: Deliverable; generated_by: string; provider?: string }>(`${this.base}/projects/${projectId}/deliverables/${delivId}/generate-content`, {}); }
     downloadDeliverablePdf(projectId: number, delivId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/deliverables/${delivId}/download-pdf`, { responseType: 'blob' }); }
+    downloadDeliverableWord(projectId: number, delivId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/deliverables/${delivId}/download-word`, { responseType: 'blob' }); }
 
     // Shared
     createSharedLink(projectId: number, type: string, expiresDays = 7): Observable<{ url: string }> { return this.http.post<{ url: string }>(`${this.base}/projects/${projectId}/share`, { type, expires_days: expiresDays }); }
