@@ -36,6 +36,8 @@ export class ApiService {
     getDeliverables(projectId: number): Observable<{ deliverables: Deliverable[] }> { return this.http.get<{ deliverables: Deliverable[] }>(`${this.base}/projects/${projectId}/deliverables`); }
     generateDeliverables(projectId: number): Observable<{ deliverables: Deliverable[]; total: number }> { return this.http.post<{ deliverables: Deliverable[]; total: number }>(`${this.base}/projects/${projectId}/deliverables`, {}); }
     updateDeliverable(projectId: number, delivId: number, data: Partial<Deliverable>): Observable<{ deliverable: Deliverable }> { return this.http.put<{ deliverable: Deliverable }>(`${this.base}/projects/${projectId}/deliverables/${delivId}`, data); }
+    generateDeliverableContent(projectId: number, delivId: number): Observable<{ deliverable: Deliverable; generated_by: string; provider?: string }> { return this.http.post<{ deliverable: Deliverable; generated_by: string; provider?: string }>(`${this.base}/projects/${projectId}/deliverables/${delivId}/generate-content`, {}); }
+    downloadDeliverablePdf(projectId: number, delivId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/deliverables/${delivId}/download-pdf`, { responseType: 'blob' }); }
 
     // Shared
     createSharedLink(projectId: number, type: string, expiresDays = 7): Observable<{ url: string }> { return this.http.post<{ url: string }>(`${this.base}/projects/${projectId}/share`, { type, expires_days: expiresDays }); }

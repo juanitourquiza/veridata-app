@@ -217,13 +217,20 @@ import {
                 <p style="color:#64748b;margin-bottom:1rem">{{ selectedDeliverable()!.description }}</p>
                 <div class="deliv-actions">
                   <select class="vd-select" [ngModel]="selectedDeliverable()!.status" (ngModelChange)="updateDeliverableStatus(selectedDeliverable()!.id, $event)"><option value="pending">Pendiente</option><option value="generated">Generado</option><option value="uploaded">Cargado</option></select>
+                  @if (!selectedDeliverable()!.content) {
+                    <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateDeliverableContent(selectedDeliverable()!.id)" [disabled]="generatingDeliverableContent() === selectedDeliverable()!.id">{{ generatingDeliverableContent() === selectedDeliverable()!.id ? 'Generando...' : '🤖 Generar con IA' }}</button>
+                  } @else {
+                    <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadDeliverablePdf(selectedDeliverable()!.id)">📄 Descargar PDF</button>
+                    <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateDeliverableContent(selectedDeliverable()!.id)" [disabled]="generatingDeliverableContent() === selectedDeliverable()!.id">🔄 Regenerar</button>
+                  }
                 </div>
                 @if (selectedDeliverable()!.content) {
                   <div class="deliv-content-text" style="margin-top:1rem;padding:1rem;background:#f8fafc;border-radius:8px;font-size:0.875rem;white-space:pre-wrap">{{ selectedDeliverable()!.content }}</div>
                 } @else {
                   <div style="margin-top:2rem;text-align:center;padding:2rem;background:#f8fafc;border-radius:12px">
-                    <div style="font-size:2.5rem;opacity:0.3">📄</div>
-                    <p style="color:#64748b;margin-top:0.5rem">Seleccione un entregable del menú lateral.</p>
+                    <div style="font-size:2.5rem;opacity:0.3">🤖</div>
+                    <p style="color:#64748b;margin-top:0.5rem">Este entregable aún no tiene contenido.</p>
+                    <p style="color:#64748b;font-size:0.875rem">Haz clic en "Generar con IA" para crear el documento automáticamente.</p>
                   </div>
                 }
               } @else {
@@ -365,6 +372,7 @@ export class ProjectWizardComponent implements OnInit {
   generatingGaps = signal(false);
   generatingReport = signal(false);
   generatingDeliverables = signal(false);
+  generatingDeliverableContent = signal<number | null>(null); // Track which deliverable is being generated
 
   manualLargeScale: boolean | null = null;
   showDeliverables = false;
@@ -540,6 +548,42 @@ export class ProjectWizardComponent implements OnInit {
         this.deliverables.set(items);
         if (this.selectedDeliverable()?.id === delivId) this.selectedDeliverable.set(res.deliverable);
       }
+    });
+  }
+
+  generateDeliverableContent(delivId: number): void {
+    this.generatingDeliverableContent.set(delivId);
+    this.api.generateDeliverableContent(this.projectId, delivId).subscribe({
+      next: (res: { deliverable: Deliverable }) => {
+        const items = this.deliverables().map(d => d.id === delivId ? res.deliverable : d);
+        this.deliverables.set(items);
+        if (this.selectedDeliverable()?.id === delivId) this.selectedDeliverable.set(res.deliverable);
+        this.generatingDeliverableContent.set(null);
+      },
+      error: (err) => {
+        this.generatingDeliverableContent.set(null);
+        if (err.status === 429) {
+          alert('Has alcanzado el límite de generación. Por favor espera un momento e intenta de nuevo.');
+        } else {
+          alert('Error al generar el documento: ' + (err.error?.message || 'Inténtalo de nuevo'));
+        }
+      }
+    });
+  }
+
+  downloadDeliverablePdf(delivId: number): void {
+    this.api.downloadDeliverablePdf(this.projectId, delivId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `entregable_${delivId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => alert('Error al descargar el PDF. Asegúrate de que el contenido esté generado.')
     });
   }
 
