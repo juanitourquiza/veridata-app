@@ -230,8 +230,8 @@ import {
               <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadActionPlanPdf()">📄 PDF</button>
               <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadActionPlanWord()">📝 Word</button>
             }
-            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="showDeliverables = true">📂 Entregables</button>
-            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="shareProject()">🔗 Compartir</button>
+            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="shareProject()">� Compartir</button>
+            <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="goToStep(5)">Entregables →</button>
           </div>
         </div>
         @if (actionItems().length === 0) { <p style="color:#64748b;text-align:center;padding:2rem;">No hay acciones generadas. Vuelve al paso anterior y genera las brechas primero.</p> }
@@ -255,72 +255,73 @@ import {
           </div>
         }
       </div>
-      <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(3)">← Anterior</button><button class="vd-btn vd-btn-primary" (click)="finishProject()">Finalizar ✓</button></div>
+      <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(3)">← Anterior</button><button class="vd-btn vd-btn-primary" (click)="goToStep(5)">Entregables →</button></div>
     }
 
-    <!-- Deliverables Panel (overlay) -->
-    @if (showDeliverables) {
-      <div class="deliverables-overlay" (click)="showDeliverables = false">
-        <div class="deliverables-panel" (click)="$event.stopPropagation()">
-          <div class="deliv-header">
-            <h3>📂 Gestor de Entregables</h3>
-            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="showDeliverables = false">← Salir</button>
+    <!-- Step 5: Deliverables -->
+    @if (currentStep() === 5) {
+      <div class="vd-card">
+        <div class="section-header">
+          <h3>📂 Gestor de Entregables</h3>
+          <div style="display:flex;gap:0.5rem">
+            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="shareProject()">🔗 Compartir</button>
           </div>
-          <div class="deliv-tabs">
-            <button class="deliv-tab" [class.active]="deliverableTab === 'pending'" (click)="switchDeliverableTab('pending')">Pendientes ({{ deliverablesByStatus('pending').length }})</button>
-            <button class="deliv-tab" [class.active]="deliverableTab === 'generated'" (click)="switchDeliverableTab('generated')">Generados ({{ deliverablesByStatus('generated').length + deliverablesByStatus('uploaded').length }})</button>
+        </div>
+        <div class="deliv-tabs">
+          <button class="deliv-tab" [class.active]="deliverableTab === 'pending'" (click)="switchDeliverableTab('pending')">Pendientes ({{ deliverablesByStatus('pending').length }})</button>
+          <button class="deliv-tab" [class.active]="deliverableTab === 'generated'" (click)="switchDeliverableTab('generated')">Generados ({{ deliverablesByStatus('generated').length + deliverablesByStatus('uploaded').length }})</button>
+        </div>
+        @if (deliverables().length === 0) {
+          <div style="text-align:center;padding:2rem;color:#64748b">
+            <p>No hay entregables generados.</p>
+            <button class="vd-btn vd-btn-primary vd-btn-sm" style="margin-top:1rem" (click)="generateDeliverablesList()" [disabled]="generatingDeliverables()">{{ generatingDeliverables() ? 'Generando...' : 'Generar Entregables' }}</button>
           </div>
-          @if (deliverables().length === 0) {
-            <div style="text-align:center;padding:2rem;color:#64748b">
-              <p>No hay entregables generados.</p>
-              <button class="vd-btn vd-btn-primary vd-btn-sm" style="margin-top:1rem" (click)="generateDeliverablesList()" [disabled]="generatingDeliverables()">{{ generatingDeliverables() ? 'Generando...' : 'Generar Entregables' }}</button>
-            </div>
-          }
-          <div class="deliv-content">
-            <div class="deliv-list">
-              @for (d of currentDeliverables(); track d.id) {
-                <div class="deliv-item" [class.active]="selectedDeliverable()?.id === d.id" (click)="selectedDeliverable.set(d)">
-                  <strong>{{ d.title }}</strong>
-                  <small>{{ d.description }}</small>
-                  <span class="vd-badge vd-badge-baja">{{ d.domain_name }}</span>
-                </div>
-              }
-            </div>
-            <div class="deliv-detail">
-              @if (selectedDeliverable()) {
-                <h4>{{ selectedDeliverable()!.title }}</h4>
-                <p style="color:#64748b;margin-bottom:1rem">{{ selectedDeliverable()!.description }}</p>
-                <div class="deliv-actions">
-                  <select class="vd-select" [ngModel]="selectedDeliverable()!.status" (ngModelChange)="updateDeliverableStatus(selectedDeliverable()!.id, $event)"><option value="pending">Pendiente</option><option value="generated">Generado</option><option value="uploaded">Cargado</option></select>
-                  @if (!selectedDeliverable()!.content) {
-                    <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateDeliverableContent(selectedDeliverable()!.id)" [disabled]="generatingDeliverableContent() === selectedDeliverable()!.id">{{ generatingDeliverableContent() === selectedDeliverable()!.id ? 'Generando...' : '🤖 Generar con IA' }}</button>
-                  } @else {
-                    <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadDeliverablePdf(selectedDeliverable()!.id)">📄 PDF</button>
-                    <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadDeliverableWord(selectedDeliverable()!.id)">📝 Word</button>
-                    <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateDeliverableContent(selectedDeliverable()!.id)" [disabled]="generatingDeliverableContent() === selectedDeliverable()!.id">🔄 Regenerar</button>
-                  }
-                </div>
-                @if (selectedDeliverable()!.content) {
-                  <div class="deliv-content-text" style="margin-top:1rem;padding:1rem;background:#f8fafc;border-radius:8px;font-size:0.875rem;white-space:pre-wrap">{{ selectedDeliverable()!.content }}</div>
+        }
+        <div class="deliv-content">
+          <div class="deliv-list">
+            @for (d of currentDeliverables(); track d.id) {
+              <div class="deliv-item" [class.active]="selectedDeliverable()?.id === d.id" (click)="selectedDeliverable.set(d)">
+                <strong>{{ d.title }}</strong>
+                <small>{{ d.description }}</small>
+                <span class="vd-badge vd-badge-baja">{{ d.domain_name }}</span>
+              </div>
+            }
+          </div>
+          <div class="deliv-detail">
+            @if (selectedDeliverable()) {
+              <h4>{{ selectedDeliverable()!.title }}</h4>
+              <p style="color:#64748b;margin-bottom:1rem">{{ selectedDeliverable()!.description }}</p>
+              <div class="deliv-actions">
+                <select class="vd-select" [ngModel]="selectedDeliverable()!.status" (ngModelChange)="updateDeliverableStatus(selectedDeliverable()!.id, $event)"><option value="pending">Pendiente</option><option value="generated">Generado</option><option value="uploaded">Cargado</option></select>
+                @if (!selectedDeliverable()!.content) {
+                  <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateDeliverableContent(selectedDeliverable()!.id)" [disabled]="generatingDeliverableContent() === selectedDeliverable()!.id">{{ generatingDeliverableContent() === selectedDeliverable()!.id ? 'Generando...' : '🤖 Generar con IA' }}</button>
                 } @else {
-                  <div style="margin-top:2rem;text-align:center;padding:2rem;background:#f8fafc;border-radius:12px">
-                    <div style="font-size:2.5rem;opacity:0.3">🤖</div>
-                    <p style="color:#64748b;margin-top:0.5rem">Este entregable aún no tiene contenido.</p>
-                    <p style="color:#64748b;font-size:0.875rem">Haz clic en "Generar con IA" para crear el documento automáticamente.</p>
-                  </div>
+                  <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadDeliverablePdf(selectedDeliverable()!.id)">📄 PDF</button>
+                  <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadDeliverableWord(selectedDeliverable()!.id)">📝 Word</button>
+                  <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateDeliverableContent(selectedDeliverable()!.id)" [disabled]="generatingDeliverableContent() === selectedDeliverable()!.id">🔄 Regenerar</button>
                 }
+              </div>
+              @if (selectedDeliverable()!.content) {
+                <div class="deliv-content-text" style="margin-top:1rem;padding:1rem;background:#f8fafc;border-radius:8px;font-size:0.875rem;white-space:pre-wrap">{{ selectedDeliverable()!.content }}</div>
               } @else {
-                <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b">
-                  <div style="text-align:center">
-                    <div style="font-size:3rem;opacity:0.3">📄</div>
-                    <p style="margin-top:0.5rem">Seleccione un entregable del menú lateral.</p>
-                  </div>
+                <div style="margin-top:2rem;text-align:center;padding:2rem;background:#f8fafc;border-radius:12px">
+                  <div style="font-size:2.5rem;opacity:0.3">🤖</div>
+                  <p style="color:#64748b;margin-top:0.5rem">Este entregable aún no tiene contenido.</p>
+                  <p style="color:#64748b;font-size:0.875rem">Haz clic en "Generar con IA" para crear el documento automáticamente.</p>
                 </div>
               }
-            </div>
+            } @else {
+              <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b">
+                <div style="text-align:center">
+                  <div style="font-size:3rem;opacity:0.3">📄</div>
+                  <p style="margin-top:0.5rem">Seleccione un entregable del menú lateral.</p>
+                </div>
+              </div>
+            }
           </div>
         </div>
       </div>
+      <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(4)">← Anterior</button><button class="vd-btn vd-btn-primary" (click)="finishProject()">Finalizar ✓</button></div>
     }
 
     @if (sharedUrl()) { <div class="share-toast vd-card">🔗 Enlace compartido: <a [href]="sharedUrl()" target="_blank">{{ sharedUrl() }}</a></div> }
@@ -393,23 +394,19 @@ import {
     .ai-field { display: flex; flex-direction: column; }
     .ai-field label { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 0.25rem; letter-spacing: 0.05em; }
 
-    /* Deliverables */
-    .deliverables-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; }
-    .deliverables-panel { background: white; border-radius: 16px; width: 90vw; max-width: 1100px; height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
-    .deliv-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; }
-    .deliv-header h3 { margin: 0; }
-    .deliv-tabs { display: flex; border-bottom: 1px solid #e2e8f0; }
+    /* Deliverables - now as step 5 */
+    .deliv-tabs { display: flex; border-bottom: 1px solid #e2e8f0; margin: 0 -1.5rem 1rem -1.5rem; padding: 0 1.5rem; }
     .deliv-tab { padding: 0.75rem 1.5rem; background: none; border: none; cursor: pointer; font-size: 0.875rem; color: #64748b; border-bottom: 2px solid transparent; }
     .deliv-tab.active { color: #5687f3; border-bottom-color: #5687f3; font-weight: 600; }
-    .deliv-content { display: grid; grid-template-columns: 320px 1fr; flex: 1; overflow: hidden; }
-    .deliv-list { overflow-y: auto; border-right: 1px solid #e2e8f0; padding: 0.5rem; }
+    .deliv-content { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; min-height: 400px; }
+    .deliv-list { overflow-y: auto; max-height: 500px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.5rem; }
     .deliv-item { padding: 0.75rem; border-radius: 8px; cursor: pointer; margin-bottom: 0.25rem; display: flex; flex-direction: column; gap: 0.25rem; }
     .deliv-item:hover { background: #f8fafc; }
     .deliv-item.active { background: rgba(86,135,243,0.08); border: 1px solid rgba(86,135,243,0.2); }
     .deliv-item strong { font-size: 0.8125rem; }
     .deliv-item small { font-size: 0.75rem; color: #64748b; }
-    .deliv-detail { padding: 1.5rem; overflow-y: auto; }
-    .deliv-actions { display: flex; gap: 0.75rem; align-items: center; }
+    .deliv-detail { padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; background: #fafbfc; }
+    .deliv-actions { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; }
 
     .share-toast { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 50; background: #0d1321; color: white; padding: 1rem 1.5rem; }
     .share-toast a { color: #5687f3; }
@@ -423,7 +420,7 @@ import {
   `],
 })
 export class ProjectWizardComponent implements OnInit {
-  steps = [{ num: 1, label: 'Información' }, { num: 2, label: 'Evaluación' }, { num: 3, label: 'Resultados' }, { num: 4, label: 'Plan de Acción' }];
+  steps = [{ num: 1, label: 'Información' }, { num: 2, label: 'Evaluación' }, { num: 3, label: 'Resultados' }, { num: 4, label: 'Plan de Acción' }, { num: 5, label: 'Entregables' }];
   currentStep = signal(1);
   isEdit = false;
   projectId = 0;
@@ -456,7 +453,6 @@ export class ProjectWizardComponent implements OnInit {
   editingDomain = signal<number | null>(null);
 
   manualLargeScale: boolean | null = null;
-  showDeliverables = false;
   deliverableTab: 'pending' | 'generated' = 'pending';
 
   dataCategories = ['Identificación', 'Contacto', 'Financieros', 'Salud', 'Biométricos', 'Geolocalización', 'Ideología', 'Orientación sexual', 'Origen étnico', 'Antecedentes penales', 'Datos de menores'];
