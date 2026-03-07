@@ -47,91 +47,125 @@ import {
 
     <!-- Step 2: Evaluation -->
     @if (currentStep() === 2) {
-      <div class="eval-header vd-card"><h2>🔍 Evaluación de Controles</h2>
-        <div class="eval-progress"><span>Progreso: {{ evaluatedCount() }}/{{ totalControls() }}</span><div class="vd-progress-bar"><div class="vd-progress-fill" [style.width.%]="evaluationProgress()"></div></div></div>
-      </div>
-      @for (domain of domains(); track domain.id) {
-        <div class="vd-card domain-card">
-          <div class="domain-header" (click)="toggleDomain(domain.id)">
-            <h3>{{ domain.code }} — {{ domain.name }}</h3><span class="toggle">{{ expandedDomains.has(domain.id) ? '▼' : '►' }}</span>
+      <div class="eval-layout">
+        <!-- Main evaluation content -->
+        <div class="eval-main">
+          <div class="eval-header vd-card"><h2>🔍 Evaluación de Controles</h2>
+            <div class="eval-progress"><span>Progreso: {{ evaluatedCount() }}/{{ totalControls() }}</span><div class="vd-progress-bar"><div class="vd-progress-fill" [style.width.%]="evaluationProgress()"></div></div></div>
           </div>
-          @if (expandedDomains.has(domain.id)) {
-            <table class="vd-table">
-              <thead><tr><th style="width:100px">Código</th><th>Control</th><th style="width:180px">Madurez</th><th style="width:200px">Hallazgo</th><th style="width:80px">Acciones</th></tr></thead>
-              <tbody>
-                @for (control of domain.controls; track control.id) {
-                  <tr>
-                    <td><strong>{{ control.code }}</strong></td>
-                    <td>
-                      @if (editingControl() === control.id) {
-                        <div style="display:flex;flex-direction:column;gap:0.5rem">
-                          <input class="vd-input" [(ngModel)]="control.name" placeholder="Nombre del control">
-                          <textarea class="vd-input" [(ngModel)]="control.statement" placeholder="Descripción" rows="2"></textarea>
-                          <select class="vd-select" [(ngModel)]="control.criticality">
-                            <option value="critico">Crítico</option>
-                            <option value="alto">Alto</option>
-                            <option value="medio">Medio</option>
-                            <option value="bajo">Bajo</option>
-                          </select>
-                          <div style="display:flex;gap:0.5rem">
-                            <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="saveControl(control)">Guardar</button>
-                            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="cancelEditingControl()">Cancelar</button>
+          @for (domain of domains(); track domain.id) {
+            <div class="vd-card domain-card">
+              <div class="domain-header" (click)="toggleDomain(domain.id)">
+                <h3>{{ domain.code }} — {{ domain.name }}</h3><span class="toggle">{{ expandedDomains.has(domain.id) ? '▼' : '►' }}</span>
+              </div>
+              @if (expandedDomains.has(domain.id)) {
+                <table class="vd-table">
+                  <thead><tr><th style="width:100px">Código</th><th>Control</th><th style="width:180px">Madurez</th><th style="width:200px">Hallazgo</th><th style="width:80px">Acciones</th></tr></thead>
+                  <tbody>
+                    @for (control of domain.controls; track control.id) {
+                      <tr>
+                        <td><strong>{{ control.code }}</strong></td>
+                        <td>
+                          @if (editingControl() === control.id) {
+                            <div style="display:flex;flex-direction:column;gap:0.5rem">
+                              <input class="vd-input" [(ngModel)]="control.name" placeholder="Nombre del control">
+                              <textarea class="vd-input" [(ngModel)]="control.statement" placeholder="Descripción" rows="2"></textarea>
+                              <select class="vd-select" [(ngModel)]="control.criticality">
+                                <option value="critico">Crítico</option>
+                                <option value="alto">Alto</option>
+                                <option value="medio">Medio</option>
+                                <option value="bajo">Bajo</option>
+                              </select>
+                              <div style="display:flex;gap:0.5rem">
+                                <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="saveControl(control)">Guardar</button>
+                                <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="cancelEditingControl()">Cancelar</button>
+                              </div>
+                            </div>
+                          } @else {
+                            <div>
+                              <div>{{ control.name }}</div>
+                              <small style="color:#64748b">{{ control.statement }}</small>
+                              <span class="vd-badge" [class]="'vd-badge-' + control.criticality">{{ control.criticality }}</span>
+                            </div>
+                          }
+                        </td>
+                        <td><select class="vd-select" [ngModel]="getMaturity(control.id)" (ngModelChange)="setMaturity(control.id, $event)"><option [ngValue]="0">Sin evaluar</option><option [ngValue]="1">1 - Inexistente</option><option [ngValue]="2">2 - Inicial</option><option [ngValue]="3">3 - Definido</option><option [ngValue]="4">4 - Gestionado</option><option [ngValue]="5">5 - Optimizado</option></select></td>
+                        <td><input class="vd-input" placeholder="Hallazgo..." [ngModel]="getFinding(control.id)" (ngModelChange)="setFinding(control.id, $event)"></td>
+                        <td>
+                          @if (editingControl() !== control.id) {
+                            <div style="display:flex;gap:0.25rem">
+                              <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="startEditingControl(control.id)" title="Editar">✏️</button>
+                              <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="deleteControl(control.id)" title="Eliminar">🗑️</button>
+                            </div>
+                          }
+                        </td>
+                      </tr>
+                    }
+                    <!-- Add new control row -->
+                    @if (addingControlToDomain() === domain.id) {
+                      <tr class="adding-control-row">
+                        <td colspan="5">
+                          <div style="display:flex;flex-direction:column;gap:0.75rem;padding:1rem;background:#f8fafc;border-radius:8px">
+                            <h4>Agregar Nuevo Control</h4>
+                            <input #newControlName class="vd-input" placeholder="Nombre del control">
+                            <textarea #newControlStatement class="vd-input" placeholder="Descripción del control" rows="2"></textarea>
+                            <select #newControlCriticality class="vd-select">
+                              <option value="critico">Crítico</option>
+                              <option value="alto">Alto</option>
+                              <option value="medio" selected>Medio</option>
+                              <option value="bajo">Bajo</option>
+                            </select>
+                            <div style="display:flex;gap:0.5rem">
+                              <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="addControl(domain.id, {name: newControlName.value, statement: newControlStatement.value, criticality: newControlCriticality.value}); newControlName.value=''; newControlStatement.value=''">Agregar</button>
+                              <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="cancelAddingControl()">Cancelar</button>
+                            </div>
                           </div>
-                        </div>
-                      } @else {
-                        <div>
-                          <div>{{ control.name }}</div>
-                          <small style="color:#64748b">{{ control.statement }}</small>
-                          <span class="vd-badge" [class]="'vd-badge-' + control.criticality">{{ control.criticality }}</span>
-                        </div>
-                      }
-                    </td>
-                    <td><select class="vd-select" [ngModel]="getMaturity(control.id)" (ngModelChange)="setMaturity(control.id, $event)"><option [ngValue]="0">Sin evaluar</option><option [ngValue]="1">1 - Inexistente</option><option [ngValue]="2">2 - Inicial</option><option [ngValue]="3">3 - Definido</option><option [ngValue]="4">4 - Gestionado</option><option [ngValue]="5">5 - Optimizado</option></select></td>
-                    <td><input class="vd-input" placeholder="Hallazgo..." [ngModel]="getFinding(control.id)" (ngModelChange)="setFinding(control.id, $event)"></td>
-                    <td>
-                      @if (editingControl() !== control.id) {
-                        <div style="display:flex;gap:0.25rem">
-                          <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="startEditingControl(control.id)" title="Editar">✏️</button>
-                          <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="deleteControl(control.id)" title="Eliminar">🗑️</button>
-                        </div>
-                      }
-                    </td>
-                  </tr>
-                }
-                <!-- Add new control row -->
-                @if (addingControlToDomain() === domain.id) {
-                  <tr class="adding-control-row">
-                    <td colspan="5">
-                      <div style="display:flex;flex-direction:column;gap:0.75rem;padding:1rem;background:#f8fafc;border-radius:8px">
-                        <h4>Agregar Nuevo Control</h4>
-                        <input #newControlName class="vd-input" placeholder="Nombre del control">
-                        <textarea #newControlStatement class="vd-input" placeholder="Descripción del control" rows="2"></textarea>
-                        <select #newControlCriticality class="vd-select">
-                          <option value="critico">Crítico</option>
-                          <option value="alto">Alto</option>
-                          <option value="medio" selected>Medio</option>
-                          <option value="bajo">Bajo</option>
-                        </select>
-                        <div style="display:flex;gap:0.5rem">
-                          <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="addControl(domain.id, {name: newControlName.value, statement: newControlStatement.value, criticality: newControlCriticality.value}); newControlName.value=''; newControlStatement.value=''">Agregar</button>
-                          <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="cancelAddingControl()">Cancelar</button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                } @else {
-                  <tr>
-                    <td colspan="5" style="text-align:center;padding:1rem">
-                      <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="startAddingControl(domain.id)">+ Agregar Control</button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+                        </td>
+                      </tr>
+                    } @else {
+                      <tr>
+                        <td colspan="5" style="text-align:center;padding:1rem">
+                          <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="startAddingControl(domain.id)">+ Agregar Control</button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
+            </div>
           }
+          <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(1)">← Anterior</button><button class="vd-btn vd-btn-primary" (click)="saveEvaluation()" [disabled]="saving()">{{ saving() ? 'Guardando...' : 'Guardar y Ver Resultados →' }}</button></div>
         </div>
-      }
-      <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(1)">← Anterior</button><button class="vd-btn vd-btn-primary" (click)="saveEvaluation()" [disabled]="saving()">{{ saving() ? 'Guardando...' : 'Guardar y Ver Resultados →' }}</button></div>
+
+        <!-- Sidebar: Evaluation History -->
+        <div class="eval-sidebar vd-card">
+          <div class="sidebar-header">
+            <h3>📚 Historial de Evaluaciones</h3>
+            <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="showSnapshotDialog.set(true)">💾 Guardar</button>
+          </div>
+          @if (evaluationSnapshots().length === 0) {
+            <p style="color:#64748b;text-align:center;padding:1rem;font-size:0.875rem">No hay evaluaciones guardadas. Guarda una versión para mantener historial.</p>
+          }
+          <div class="snapshot-list">
+            @for (snapshot of evaluationSnapshots(); track snapshot.id) {
+              <div class="snapshot-item" [class.active]="selectedSnapshot()?.id === snapshot.id" (click)="selectSnapshot(snapshot)">
+                <div class="snapshot-name">{{ snapshot.name }}</div>
+                <div class="snapshot-meta">
+                  <span>{{ snapshot.snapshot_date | date:'dd/MM/yyyy' }}</span>
+                  <span class="vd-badge vd-badge-baja">{{ snapshot.global_maturity | number:'1.1-1' }}/5</span>
+                </div>
+                @if (snapshot.notes) {
+                  <div class="snapshot-notes">{{ snapshot.notes }}</div>
+                }
+                <div class="snapshot-actions">
+                  <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="restoreSnapshot(snapshot.id); $event.stopPropagation()">↩️ Restaurar</button>
+                  <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="deleteSnapshot(snapshot.id); $event.stopPropagation()">🗑️</button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
     }
 
     <!-- Step 3: Results & GAP Report -->
@@ -325,6 +359,27 @@ import {
     }
 
     @if (sharedUrl()) { <div class="share-toast vd-card">🔗 Enlace compartido: <a [href]="sharedUrl()" target="_blank">{{ sharedUrl() }}</a></div> }
+
+    <!-- Save Snapshot Dialog -->
+    @if (showSnapshotDialog()) {
+      <div class="snapshot-dialog-overlay" (click)="showSnapshotDialog.set(false)">
+        <div class="snapshot-dialog" (click)="$event.stopPropagation()">
+          <h3>💾 Guardar Evaluación</h3>
+          <div class="form-group">
+            <label>Nombre de la evaluación</label>
+            <input #snapshotName class="vd-input" placeholder="Ej: Evaluación Marzo 2026">
+          </div>
+          <div class="form-group">
+            <label>Notas (opcional)</label>
+            <textarea #snapshotNotes class="vd-input" rows="3" placeholder="Notas sobre esta evaluación..."></textarea>
+          </div>
+          <div class="dialog-actions">
+            <button class="vd-btn vd-btn-secondary" (click)="showSnapshotDialog.set(false)">Cancelar</button>
+            <button class="vd-btn vd-btn-primary" (click)="saveSnapshot(snapshotName.value, snapshotNotes.value)" [disabled]="savingSnapshot()">{{ savingSnapshot() ? 'Guardando...' : 'Guardar' }}</button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     h2 { margin: 0 0 1.5rem; font-size: 1.25rem; }
@@ -411,12 +466,40 @@ import {
     .share-toast { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 50; background: #0d1321; color: white; padding: 1rem 1.5rem; }
     .share-toast a { color: #5687f3; }
 
-    .vd-badge-alta { background: rgba(239,68,68,0.1); color: #dc2626; }
+    /* Evaluation Layout with Sidebar */
+    .eval-layout { display: grid; grid-template-columns: 1fr 320px; gap: 1rem; }
+    .eval-main { min-width: 0; }
+    .eval-sidebar { padding: 1rem; max-height: calc(100vh - 200px); overflow-y: auto; }
+    .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .sidebar-header h3 { margin: 0; font-size: 0.9375rem; }
+    .snapshot-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .snapshot-item { padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .snapshot-item:hover { border-color: #5687f3; background: #f8fafc; }
+    .snapshot-item.active { border-color: #5687f3; background: rgba(86,135,243,0.08); }
+    .snapshot-name { font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem; }
+    .snapshot-meta { display: flex; gap: 0.5rem; align-items: center; font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem; }
+    .snapshot-notes { font-size: 0.75rem; color: #64748b; font-style: italic; margin-bottom: 0.5rem; }
+    .snapshot-actions { display: flex; gap: 0.25rem; }
+
+    /* Snapshot Dialog */
+    .snapshot-dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; }
+    .snapshot-dialog { background: white; border-radius: 12px; padding: 1.5rem; width: 90%; max-width: 400px; }
+    .snapshot-dialog h3 { margin: 0 0 1rem; }
+    .snapshot-dialog .form-group { margin-bottom: 1rem; }
+    .snapshot-dialog label { display: block; font-size: 0.875rem; margin-bottom: 0.25rem; }
+    .snapshot-dialog input, .snapshot-dialog textarea { width: 100%; }
+    .snapshot-dialog .dialog-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
     .vd-badge-media { background: rgba(245,158,11,0.1); color: #d97706; }
     .vd-badge-baja { background: rgba(34,197,94,0.1); color: #16a34a; }
     .vd-badge-critica { background: rgba(127,29,29,0.1); color: #991b1b; }
 
-    @media (max-width: 768px) { .form-grid, .results-grid, .gap-summary { grid-template-columns: 1fr; } .ai-controls { grid-template-columns: 1fr 1fr; } .gap-item-body { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) {
+      .form-grid, .results-grid, .gap-summary { grid-template-columns: 1fr; }
+      .ai-controls { grid-template-columns: 1fr 1fr; }
+      .gap-item-body { grid-template-columns: 1fr; }
+      .eval-layout { grid-template-columns: 1fr; }
+      .eval-sidebar { max-height: none; }
+    }
   `],
 })
 export class ProjectWizardComponent implements OnInit {
@@ -445,7 +528,13 @@ export class ProjectWizardComponent implements OnInit {
   generatingGaps = signal(false);
   generatingReport = signal(false);
   generatingDeliverables = signal(false);
-  generatingDeliverableContent = signal<number | null>(null); // Track which deliverable is being generated
+  generatingDeliverableContent = signal<number | null>(null);
+
+  // Evaluation Snapshot signals
+  evaluationSnapshots = signal<{ id: number; name: string; snapshot_date: string; global_maturity: number; notes?: string }[]>([]);
+  selectedSnapshot = signal<{ id: number; name: string; snapshot_date: string; global_maturity: number; notes?: string } | null>(null);
+  showSnapshotDialog = signal(false);
+  savingSnapshot = signal(false);
 
   // Control editing signals
   editingControl = signal<number | null>(null);
@@ -474,6 +563,7 @@ export class ProjectWizardComponent implements OnInit {
         next: (p: Project) => {
           this.project = { name: p.name, description: p.description, framework_id: p.framework?.id || 0, data_subjects_count: p.data_subjects_count, data_categories: p.data_categories || [], large_scale: p.large_scale };
           this.loadEvaluation();
+          this.loadEvaluationSnapshots();
         }
       });
     }
@@ -837,6 +927,59 @@ export class ProjectWizardComponent implements OnInit {
   }
 
   shareProject(): void { this.api.createSharedLink(this.projectId, 'action_plan').subscribe({ next: (res: { url: string }) => this.sharedUrl.set(res.url) }); }
+
+  // Evaluation Snapshot methods
+  loadEvaluationSnapshots(): void {
+    this.api.getEvaluationSnapshots(this.projectId).subscribe({
+      next: (res: { snapshots: { id: number; name: string; snapshot_date: string; global_maturity: number; notes?: string }[] }) => {
+        this.evaluationSnapshots.set(res.snapshots);
+      }
+    });
+  }
+
+  selectSnapshot(snapshot: { id: number; name: string; snapshot_date: string; global_maturity: number; notes?: string }): void {
+    this.selectedSnapshot.set(snapshot);
+  }
+
+  saveSnapshot(name: string, notes?: string): void {
+    this.savingSnapshot.set(true);
+    this.api.createEvaluationSnapshot(this.projectId, name, notes).subscribe({
+      next: () => {
+        this.savingSnapshot.set(false);
+        this.showSnapshotDialog.set(false);
+        this.loadEvaluationSnapshots();
+      },
+      error: () => {
+        this.savingSnapshot.set(false);
+        alert('Error al guardar la evaluación.');
+      }
+    });
+  }
+
+  restoreSnapshot(snapshotId: number): void {
+    if (!confirm('¿Estás seguro de restaurar esta evaluación? Se reemplazará la evaluación actual.')) return;
+    this.api.restoreEvaluationSnapshot(this.projectId, snapshotId).subscribe({
+      next: () => {
+        this.loadEvaluation();
+        this.loadEvaluationSnapshots();
+        alert('Evaluación restaurada exitosamente.');
+      },
+      error: () => alert('Error al restaurar la evaluación.')
+    });
+  }
+
+  deleteSnapshot(snapshotId: number): void {
+    if (!confirm('¿Estás seguro de eliminar esta versión guardada?')) return;
+    this.api.deleteEvaluationSnapshot(this.projectId, snapshotId).subscribe({
+      next: () => {
+        this.loadEvaluationSnapshots();
+        if (this.selectedSnapshot()?.id === snapshotId) {
+          this.selectedSnapshot.set(null);
+        }
+      },
+      error: () => alert('Error al eliminar la evaluación.')
+    });
+  }
 
   finishProject(): void {
     const pendingDeliverables = this.deliverablesByStatus('pending').length;

@@ -53,6 +53,13 @@ export class ApiService {
     // Shared
     createSharedLink(projectId: number, type: string, expiresDays = 7): Observable<{ url: string }> { return this.http.post<{ url: string }>(`${this.base}/projects/${projectId}/share`, { type, expires_days: expiresDays }); }
 
+    // Evaluation Snapshots (History/Traceability)
+    getEvaluationSnapshots(projectId: number): Observable<{ snapshots: { id: number; name: string; snapshot_date: string; global_maturity: number; notes?: string }[] }> { return this.http.get<{ snapshots: { id: number; name: string; snapshot_date: string; global_maturity: number; notes?: string }[] }>(`${this.base}/projects/${projectId}/evaluation-snapshots`); }
+    createEvaluationSnapshot(projectId: number, name: string, notes?: string): Observable<{ message: string; snapshot: { id: number; name: string; snapshot_date: string; global_maturity: number } }> { return this.http.post<{ message: string; snapshot: { id: number; name: string; snapshot_date: string; global_maturity: number } }>(`${this.base}/projects/${projectId}/evaluation-snapshots`, { name, notes }); }
+    getEvaluationSnapshot(projectId: number, snapshotId: number): Observable<{ snapshot: { id: number; name: string; snapshot_date: string; global_maturity: number; evaluations_data: Evaluation[]; gaps_data?: Gap[]; notes?: string } }> { return this.http.get<{ snapshot: { id: number; name: string; snapshot_date: string; global_maturity: number; evaluations_data: Evaluation[]; gaps_data?: Gap[]; notes?: string } }>(`${this.base}/projects/${projectId}/evaluation-snapshots/${snapshotId}`); }
+    restoreEvaluationSnapshot(projectId: number, snapshotId: number): Observable<{ message: string; snapshot: { id: number; name: string; snapshot_date: string; global_maturity: number } }> { return this.http.post<{ message: string; snapshot: { id: number; name: string; snapshot_date: string; global_maturity: number } }>(`${this.base}/projects/${projectId}/evaluation-snapshots/${snapshotId}/restore`, {}); }
+    deleteEvaluationSnapshot(projectId: number, snapshotId: number): Observable<{ message: string }> { return this.http.delete<{ message: string }>(`${this.base}/projects/${projectId}/evaluation-snapshots/${snapshotId}`); }
+
     // Frameworks
     getFrameworks(): Observable<Framework[]> { return this.http.get<Framework[]>(`${this.base}/admin/frameworks`); }
     getControls(frameworkId: number): Observable<ControlDomain[]> { return this.http.get<ControlDomain[]>(`${this.base}/admin/frameworks/${frameworkId}/controls`); }
