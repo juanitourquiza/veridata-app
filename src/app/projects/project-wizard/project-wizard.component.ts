@@ -277,7 +277,7 @@ import {
                 <select class="vd-select" [ngModel]="item.status" (ngModelChange)="updateActionField(item.id, 'status', $event)"><option value="pendiente">Pendiente</option><option value="en_progreso">En Progreso</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select>
               </div>
               <div class="ai-field"><label>Prioridad</label>
-                <select class="vd-select" [ngModel]="item.priority" (ngModelChange)="updateActionField(item.id, 'priority', $event)"><option value="critica">Crítica</option><option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option></select>
+                <select class="vd-select" [ngModel]="item.priority" (ngModelChange)="updateActionField(item.id, 'priority', $event)"><option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option></select>
               </div>
               <div class="ai-field"><label>Responsable</label>
                 <select class="vd-select" [ngModel]="item.assigned_to" (ngModelChange)="updateActionField(item.id, 'assigned_to', $event)"><option [ngValue]="null">Sin asignar</option>@for (u of teamUsers(); track u.id) { <option [ngValue]="u.id">{{ u.name }}</option> }</select>
