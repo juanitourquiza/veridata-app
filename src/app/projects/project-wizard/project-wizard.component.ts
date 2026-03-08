@@ -31,7 +31,40 @@ import {
           <div class="form-group full"><label class="vd-label">Nombre del proyecto</label><input class="vd-input" [(ngModel)]="project.name" placeholder="Ej: Evaluación LOPDP 2026"></div>
           <div class="form-group full"><label class="vd-label">Descripción</label><textarea class="vd-input" rows="3" [(ngModel)]="project.description" placeholder="Describe el alcance de la evaluación"></textarea></div>
           <div class="form-group"><label class="vd-label">Marco normativo</label><select class="vd-select" [(ngModel)]="project.framework_id"><option [ngValue]="0" disabled>Seleccionar...</option>@for (f of frameworks(); track f.id) { <option [ngValue]="f.id">{{ f.name }}</option> }</select></div>
-          <div class="form-group"><label class="vd-label">Nº de titulares de datos</label><input type="number" class="vd-input" [(ngModel)]="project.data_subjects_count" min="0"></div>
+
+          <!-- MTGE: Número de titulares -->
+          <div class="form-group"><label class="vd-label">Nº de titulares de datos (12 meses)</label><input type="number" class="vd-input" [(ngModel)]="project.data_subjects_count" min="0"></div>
+
+          <!-- MTGE: Volumen de datos -->
+          <div class="form-group"><label class="vd-label">Volumen: tipos de datos por titular</label><input type="number" class="vd-input" [(ngModel)]="project.data_volume_count" min="0" placeholder="Ej: 15"></div>
+
+          <!-- MTGE: Frecuencia del tratamiento -->
+          <div class="form-group"><label class="vd-label">Frecuencia del tratamiento</label>
+            <select class="vd-select" [(ngModel)]="project.treatment_frequency">
+              <option value="puntual">Puntual (0.5 pts)</option>
+              <option value="periodica">Periódica/Recurrente (1 pt)</option>
+              <option value="continua">Continua/Tiempo real (2 pts)</option>
+            </select>
+          </div>
+
+          <!-- MTGE: Permanencia del tratamiento -->
+          <div class="form-group"><label class="vd-label">Permanencia del tratamiento</label>
+            <select class="vd-select" [(ngModel)]="project.treatment_permanence">
+              <option value="ocasional">Ocasional (0.5 pts)</option>
+              <option value="temporal">Temporal (1 pt)</option>
+              <option value="prolongada">Prolongada (2 pts)</option>
+            </select>
+          </div>
+
+          <!-- MTGE: Alcance geográfico -->
+          <div class="form-group"><label class="vd-label">Alcance geográfico</label>
+            <select class="vd-select" [(ngModel)]="project.geographic_scope">
+              <option value="local">Local (1 pt)</option>
+              <option value="nacional">Nacional (2 pts)</option>
+              <option value="global">Global/Transfronterizo (3 pts)</option>
+            </select>
+          </div>
+
           <div class="form-group full"><label class="vd-label">Categorías de datos tratados</label>
             <div class="chip-grid">
               @for (cat of dataCategories; track cat) {
@@ -39,7 +72,47 @@ import {
               }
             </div>
           </div>
+
+          <!-- Casos de calificación directa (Art. 14) -->
+          <div class="form-group full">
+            <label class="vd-label">Casos de calificación directa a gran escala (Art. 14)</label>
+            <div class="direct-qualification-grid">
+              <label class="chip" [class.selected]="project.direct_health_data">
+                <input type="checkbox" [(ngModel)]="project.direct_health_data">
+                <span>🏥 Tratamientos de salud/sensibles</span>
+              </label>
+              <label class="chip" [class.selected]="project.direct_systematic_profiling">
+                <input type="checkbox" [(ngModel)]="project.direct_systematic_profiling">
+                <span>🤖 Perfilamiento/predicción automatizada</span>
+              </label>
+              <label class="chip" [class.selected]="project.direct_surveillance">
+                <input type="checkbox" [(ngModel)]="project.direct_surveillance">
+                <span>📹 Videovigilancia/monitoreo sistemático</span>
+              </label>
+              <label class="chip" [class.selected]="project.direct_biometric">
+                <input type="checkbox" [(ngModel)]="project.direct_biometric">
+                <span>👤 Datos biométricos/geolocalización</span>
+              </label>
+              <label class="chip" [class.selected]="project.direct_credit_system">
+                <input type="checkbox" [(ngModel)]="project.direct_credit_system">
+                <span>💳 Sistemas crediticios/financieros</span>
+              </label>
+              <label class="chip" [class.selected]="project.direct_minors_systematic">
+                <input type="checkbox" [(ngModel)]="project.direct_minors_systematic">
+                <span>👶 Datos de niños/adolescentes (sistemático)</span>
+              </label>
+              <label class="chip" [class.selected]="project.direct_systematic_transfer">
+                <input type="checkbox" [(ngModel)]="project.direct_systematic_transfer">
+                <span>🔄 Transferencias sistemáticas de datos</span>
+              </label>
+              <label class="chip" [class.selected]="project.direct_courier_messaging">
+                <input type="checkbox" [(ngModel)]="project.direct_courier_messaging">
+                <span>📦 Mensajería/courier</span>
+              </label>
+            </div>
+          </div>
         </div>
+
         @if (project.data_subjects_count > 50000 || hasSpecialCategory()) { <div class="alert-warn">⚠️ Tratamiento a gran escala detectado. Se requiere Evaluación de Impacto.</div> }
         <div class="step-actions"><button class="vd-btn vd-btn-primary" (click)="saveProject()" [disabled]="saving()">{{ saving() ? 'Guardando...' : isEdit ? 'Guardar Cambios' : 'Crear y Continuar →' }}</button></div>
       </div>
@@ -388,6 +461,8 @@ import {
     .form-group.full { grid-column: 1 / -1; }
     .step-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
     .chip-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .direct-qualification-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+    @media (max-width: 768px) { .direct-qualification-grid { grid-template-columns: 1fr; } }
     .chip { display: flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.8125rem; cursor: pointer; transition: all 0.2s; background: white; }
     .chip:hover { border-color: #5687f3; }
     .chip.selected { background: rgba(86,135,243,0.1); border-color: #5687f3; color: #5687f3; font-weight: 600; }
@@ -508,7 +583,46 @@ export class ProjectWizardComponent implements OnInit {
   isEdit = false;
   projectId = 0;
 
-  project: { name: string; description: string; framework_id: number; data_subjects_count: number; data_categories: string[]; large_scale?: boolean } = { name: '', description: '', framework_id: 0, data_subjects_count: 0, data_categories: [] };
+  project: {
+    name: string;
+    description: string;
+    framework_id: number;
+    data_subjects_count: number;
+    data_categories: string[];
+    large_scale?: boolean;
+    // MTGE fields
+    data_volume_count?: number;
+    treatment_frequency?: 'puntual' | 'periodica' | 'continua';
+    treatment_permanence?: 'ocasional' | 'temporal' | 'prolongada';
+    geographic_scope?: 'local' | 'nacional' | 'global';
+    direct_health_data?: boolean;
+    direct_systematic_profiling?: boolean;
+    direct_surveillance?: boolean;
+    direct_biometric?: boolean;
+    direct_credit_system?: boolean;
+    direct_minors_systematic?: boolean;
+    direct_systematic_transfer?: boolean;
+    direct_courier_messaging?: boolean;
+  } = {
+    name: '',
+    description: '',
+    framework_id: 0,
+    data_subjects_count: 0,
+    data_categories: [],
+    // MTGE defaults
+    data_volume_count: 0,
+    treatment_frequency: 'puntual',
+    treatment_permanence: 'ocasional',
+    geographic_scope: 'local',
+    direct_health_data: false,
+    direct_systematic_profiling: false,
+    direct_surveillance: false,
+    direct_biometric: false,
+    direct_credit_system: false,
+    direct_minors_systematic: false,
+    direct_systematic_transfer: false,
+    direct_courier_messaging: false,
+  };
   frameworks = signal<Framework[]>([]);
   domains = signal<ControlDomain[]>([]);
   evaluationMap = signal<Map<number, { maturity_level: number; findings: string }>>(new Map());
