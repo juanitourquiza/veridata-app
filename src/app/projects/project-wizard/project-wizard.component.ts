@@ -180,7 +180,8 @@ import {
                             <div>
                               <div>{{ control.name }}</div>
                               <small style="color:#64748b">{{ control.statement }}</small>
-                              <span class="vd-badge" [class]="'vd-badge-' + control.criticality">{{ control.criticality }}</span>
+                              @let effectiveImpact = getEffectiveImpact(control.criticality, control.id);
+                              <span class="vd-badge" [class]="'vd-badge-' + effectiveImpact">{{ effectiveImpact }}</span>
                             </div>
                           }
                         </td>
@@ -1220,6 +1221,26 @@ export class ProjectWizardComponent implements OnInit {
   onDomainDragEnd(event: DragEvent): void {
     this.draggingDomain.set(null);
     this.dragOverDomain.set(null);
+  }
+
+  // Calculate effective impact based on control criticality and maturity achieved
+  getEffectiveImpact(criticality: string, controlId: number): string {
+    const maturity = this.getMaturity(controlId);
+
+    // Madurez 4-5: Always low impact (control is well implemented)
+    if (maturity >= 4) {
+      return 'baja';
+    }
+
+    // Madurez 1-2: Use original criticality
+    if (maturity <= 2) {
+      return criticality === 'alto' ? 'alta' : (criticality === 'medio' ? 'media' : 'baja');
+    }
+
+    // Madurez 3: Reduce 1 level
+    if (criticality === 'alto') return 'media';
+    if (criticality === 'medio') return 'baja';
+    return 'baja';
   }
 
   finishProject(): void {
