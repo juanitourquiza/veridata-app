@@ -615,6 +615,7 @@ import {
     .snapshot-dialog .dialog-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
     .vd-badge-media { background: rgba(245,158,11,0.1); color: #d97706; }
     .vd-badge-baja { background: rgba(34,197,94,0.1); color: #16a34a; }
+    .vd-badge-alta { background: rgba(239,68,68,0.1); color: #dc2626; }
     .vd-badge-critica { background: rgba(127,29,29,0.1); color: #991b1b; }
 
     @media (max-width: 768px) {
