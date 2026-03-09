@@ -211,32 +211,41 @@ import {
         </div>
 
         <!-- Sidebar: Evaluation History -->
-        <div class="eval-sidebar vd-card">
+        <div class="eval-sidebar vd-card" [class.collapsed]="sidebarCollapsed()">
           <div class="sidebar-header">
-            <h3>📚 Historial de Evaluaciones</h3>
-            <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="showSnapshotDialog.set(true)">💾 Guardar</button>
-          </div>
-          @if (evaluationSnapshots().length === 0) {
-            <p style="color:#64748b;text-align:center;padding:1rem;font-size:0.875rem">No hay evaluaciones guardadas. Guarda una versión para mantener historial.</p>
-          }
-          <div class="snapshot-list">
-            @for (snapshot of evaluationSnapshots(); track snapshot.id) {
-              <div class="snapshot-item" [class.active]="selectedSnapshot()?.id === snapshot.id" (click)="selectSnapshot(snapshot)">
-                <div class="snapshot-name">{{ snapshot.name }}</div>
-                <div class="snapshot-meta">
-                  <span>{{ snapshot.snapshot_date | date:'dd/MM/yyyy' }}</span>
-                  <span class="vd-badge vd-badge-baja">{{ snapshot.global_maturity | number:'1.1-1' }}/5</span>
-                </div>
-                @if (snapshot.notes) {
-                  <div class="snapshot-notes">{{ snapshot.notes }}</div>
-                }
-                <div class="snapshot-actions">
-                  <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="restoreSnapshot(snapshot.id); $event.stopPropagation()">↩️ Restaurar</button>
-                  <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="deleteSnapshot(snapshot.id); $event.stopPropagation()">🗑️</button>
-                </div>
+            @if (!sidebarCollapsed()) {
+              <h3>📚 Historial</h3>
+              <div class="sidebar-actions">
+                <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="showSnapshotDialog.set(true)">💾 Guardar</button>
+                <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="sidebarCollapsed.set(true)" title="Colapsar">◀</button>
               </div>
+            } @else {
+              <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="sidebarCollapsed.set(false)" title="Expandir">▶ Historial</button>
             }
           </div>
+          @if (!sidebarCollapsed()) {
+            @if (evaluationSnapshots().length === 0) {
+              <p style="color:#64748b;text-align:center;padding:1rem;font-size:0.875rem">No hay evaluaciones guardadas. Guarda una versión para mantener historial.</p>
+            }
+            <div class="snapshot-list">
+              @for (snapshot of evaluationSnapshots(); track snapshot.id) {
+                <div class="snapshot-item" [class.active]="selectedSnapshot()?.id === snapshot.id" (click)="selectSnapshot(snapshot)">
+                  <div class="snapshot-name">{{ snapshot.name }}</div>
+                  <div class="snapshot-meta">
+                    <span>{{ snapshot.snapshot_date | date:'dd/MM/yyyy' }}</span>
+                    <span class="vd-badge vd-badge-baja">{{ snapshot.global_maturity | number:'1.1-1' }}/5</span>
+                  </div>
+                  @if (snapshot.notes) {
+                    <div class="snapshot-notes">{{ snapshot.notes }}</div>
+                  }
+                  <div class="snapshot-actions">
+                    <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="restoreSnapshot(snapshot.id); $event.stopPropagation()">↩️ Restaurar</button>
+                    <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="deleteSnapshot(snapshot.id); $event.stopPropagation()">🗑️</button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
         </div>
       </div>
     }
@@ -542,11 +551,15 @@ import {
     .share-toast a { color: #5687f3; }
 
     /* Evaluation Layout with Sidebar */
-    .eval-layout { display: grid; grid-template-columns: 1fr 320px; gap: 1rem; }
+    .eval-layout { display: grid; grid-template-columns: 1fr 320px; gap: 1rem; transition: all 0.3s ease; }
+    .eval-layout:has(.eval-sidebar.collapsed) { grid-template-columns: 1fr 50px; }
     .eval-main { min-width: 0; }
-    .eval-sidebar { padding: 1rem; max-height: calc(100vh - 200px); overflow-y: auto; }
+    .eval-sidebar { padding: 1rem; max-height: calc(100vh - 200px); overflow-y: auto; transition: all 0.3s ease; }
+    .eval-sidebar.collapsed { padding: 0.5rem; max-height: none; overflow: visible; }
     .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .eval-sidebar.collapsed .sidebar-header { margin-bottom: 0; }
     .sidebar-header h3 { margin: 0; font-size: 0.9375rem; }
+    .sidebar-actions { display: flex; gap: 0.5rem; }
     .snapshot-list { display: flex; flex-direction: column; gap: 0.5rem; }
     .snapshot-item { padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
     .snapshot-item:hover { border-color: #5687f3; background: #f8fafc; }
@@ -649,6 +662,7 @@ export class ProjectWizardComponent implements OnInit {
   selectedSnapshot = signal<{ id: number; name: string; snapshot_date: string; global_maturity: number; notes?: string } | null>(null);
   showSnapshotDialog = signal(false);
   savingSnapshot = signal(false);
+  sidebarCollapsed = signal(false);
 
   // Control editing signals
   editingControl = signal<number | null>(null);
