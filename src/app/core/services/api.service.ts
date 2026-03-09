@@ -69,6 +69,9 @@ export class ApiService {
     updateControl(controlId: number, data: Partial<Control>): Observable<Control> { return this.http.put<Control>(`${this.base}/admin/controls/${controlId}`, data); }
     deleteControl(controlId: number): Observable<void> { return this.http.delete<void>(`${this.base}/admin/controls/${controlId}`); }
 
+    // Domain CRUD (for inline editing in evaluation)
+    updateDomain(domainId: number, data: { name?: string; description?: string }): Observable<ControlDomain> { return this.http.put<ControlDomain>(`${this.base}/admin/domains/${domainId}`, data); }
+
     // Users (for assignment dropdowns)
     getUsers(): Observable<{ data: User[] }> { return this.http.get<{ data: User[] }>(`${this.base}/users`); }
 }

@@ -128,8 +128,21 @@ import {
           </div>
           @for (domain of domains(); track domain.id) {
             <div class="vd-card domain-card">
-              <div class="domain-header" (click)="toggleDomain(domain.id)">
-                <h3>{{ domain.code }} — {{ domain.name }}</h3><span class="toggle">{{ expandedDomains.has(domain.id) ? '▼' : '►' }}</span>
+              <div class="domain-header" (click)="!editingDomain() && toggleDomain(domain.id)">
+                @if (editingDomain() === domain.id) {
+                  <div style="display:flex;gap:0.5rem;flex:1;align-items:center">
+                    <span style="font-weight:600;color:#64748b">{{ domain.code }} —</span>
+                    <input class="vd-input" style="flex:1" [(ngModel)]="domain.name" placeholder="Nombre del dominio">
+                    <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="saveDomain(domain); $event.stopPropagation()">Guardar</button>
+                    <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="cancelEditingDomain(); $event.stopPropagation()">Cancelar</button>
+                  </div>
+                } @else {
+                  <h3>{{ domain.code }} — {{ domain.name }}</h3>
+                  <div style="display:flex;gap:0.5rem;align-items:center">
+                    <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="startEditingDomain(domain.id); $event.stopPropagation()" title="Editar nombre">✏️</button>
+                    <span class="toggle">{{ expandedDomains.has(domain.id) ? '▼' : '►' }}</span>
+                  </div>
+                }
               </div>
               @if (expandedDomains.has(domain.id)) {
                 <table class="vd-table">
@@ -1106,6 +1119,38 @@ export class ProjectWizardComponent implements OnInit {
         }
       },
       error: () => alert('Error al eliminar la evaluación.')
+    });
+  }
+
+  // Domain editing methods
+  startEditingDomain(domainId: number): void {
+    this.editingDomain.set(domainId);
+  }
+
+  cancelEditingDomain(): void {
+    this.editingDomain.set(null);
+    // Recargar para restaurar el nombre original si se canceló
+    this.loadEvaluation();
+  }
+
+  saveDomain(domain: ControlDomain): void {
+    if (!domain.name.trim()) {
+      alert('El nombre del dominio no puede estar vacío');
+      return;
+    }
+    this.api.updateDomain(domain.id, { name: domain.name }).subscribe({
+      next: () => {
+        this.editingDomain.set(null);
+        // Actualizar el dominio en la lista local
+        const updatedDomains = this.domains().map(d =>
+          d.id === domain.id ? { ...d, name: domain.name } : d
+        );
+        this.domains.set(updatedDomains);
+      },
+      error: () => {
+        alert('Error al guardar el nombre del dominio');
+        this.loadEvaluation();
+      }
     });
   }
 
