@@ -242,7 +242,7 @@ import {
                 <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="sidebarCollapsed.set(true)" title="Colapsar">◀</button>
               </div>
             } @else {
-              <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="sidebarCollapsed.set(false)" title="Expandir">▶ Historial</button>
+              <button class="vd-btn vd-btn-secondary vd-btn-sm sidebar-expand-btn" (click)="sidebarCollapsed.set(false)" title="Expandir">▶ <span class="expand-text">Historial</span></button>
             }
           </div>
           @if (!sidebarCollapsed()) {
@@ -623,6 +623,13 @@ import {
       .gap-item-body { grid-template-columns: 1fr; }
       .eval-layout { grid-template-columns: 1fr; }
       .eval-sidebar { max-height: none; }
+      .sidebar-actions { display: flex; gap: 0.5rem; }
+      .sidebar-expand-btn .expand-text { display: inline; }
+    }
+    @media (max-width: 1024px) {
+      .eval-layout { grid-template-columns: 1fr; }
+      .eval-sidebar { max-height: none; }
+      .sidebar-expand-btn .expand-text { display: none; }
     }
   `],
 })
