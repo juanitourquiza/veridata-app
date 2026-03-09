@@ -180,8 +180,7 @@ import {
                             <div>
                               <div>{{ control.name }}</div>
                               <small style="color:#64748b">{{ control.statement }}</small>
-                              @let effectiveImpact = getEffectiveImpact(control.criticality, control.id);
-                              <span class="vd-badge" [class]="'vd-badge-' + effectiveImpact">{{ effectiveImpact }}</span>
+                              <span class="vd-badge" [class]="'vd-badge-' + (control.criticality === 'alto' ? 'alta' : (control.criticality === 'medio' ? 'media' : 'baja'))">{{ control.criticality | uppercase }}</span>
                             </div>
                           }
                         </td>
