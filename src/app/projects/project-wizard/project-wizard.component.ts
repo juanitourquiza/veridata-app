@@ -167,7 +167,6 @@ import {
                               <input class="vd-input" [(ngModel)]="control.name" placeholder="Nombre del control">
                               <textarea class="vd-input" [(ngModel)]="control.statement" placeholder="Descripción" rows="2"></textarea>
                               <select class="vd-select" [(ngModel)]="control.criticality">
-                                <option value="critico">Crítico</option>
                                 <option value="alto">Alto</option>
                                 <option value="medio">Medio</option>
                                 <option value="bajo">Bajo</option>
@@ -206,7 +205,6 @@ import {
                             <input #newControlName class="vd-input" placeholder="Nombre del control">
                             <textarea #newControlStatement class="vd-input" placeholder="Descripción del control" rows="2"></textarea>
                             <select #newControlCriticality class="vd-select">
-                              <option value="critico">Crítico</option>
                               <option value="alto">Alto</option>
                               <option value="medio" selected>Medio</option>
                               <option value="bajo">Bajo</option>
@@ -976,8 +974,8 @@ export class ProjectWizardComponent implements OnInit {
     if (!domain) return;
     const nextOrder = domain.controls.length + 1;
     const nextCode = this.generateNextControlCode(domain);
-    const validCriticality = ['critico', 'alto', 'medio', 'bajo'].includes(newControl.criticality)
-      ? (newControl.criticality as 'critico' | 'alto' | 'medio' | 'bajo')
+    const validCriticality = ['alto', 'medio', 'bajo'].includes(newControl.criticality)
+      ? (newControl.criticality as 'alto' | 'medio' | 'bajo')
       : 'medio';
     this.api.createControl({
       domain_id: domainId,
