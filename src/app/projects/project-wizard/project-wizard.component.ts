@@ -185,7 +185,7 @@ import {
                             </div>
                           }
                         </td>
-                        <td><select class="vd-select" [ngModel]="getMaturity(control.id)" (ngModelChange)="setMaturity(control.id, $event)"><option [ngValue]="0">Sin evaluar</option><option [ngValue]="1">1 - Inexistente</option><option [ngValue]="2">2 - Inicial</option><option [ngValue]="3">3 - Definido</option><option [ngValue]="4">4 - Gestionado</option><option [ngValue]="5">5 - Optimizado</option></select></td>
+                        <td><select class="vd-select" [ngModel]="getMaturity(control.id)" (ngModelChange)="setMaturity(control.id, $event)"><option [ngValue]="0">Sin evaluar</option><option [ngValue]="1">1 - Inexistente: No tiene control</option><option [ngValue]="2">2 - Inicial: Solo tiene control</option><option [ngValue]="3">3 - Definido: Tiene control y seguimiento</option><option [ngValue]="4">4 - Gestionado: Tiene control, seguimiento e indicador</option><option [ngValue]="5">5 - Optimizado: Tiene control, seguimiento, indicador y mejoras</option></select></td>
                         <td><input class="vd-input" placeholder="Hallazgo..." [ngModel]="getFinding(control.id)" (ngModelChange)="setFinding(control.id, $event)"></td>
                         <td>
                           @if (editingControl() !== control.id) {
