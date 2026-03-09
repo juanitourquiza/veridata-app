@@ -737,7 +737,27 @@ export class ProjectWizardComponent implements OnInit {
       this.isEdit = true; this.projectId = +id;
       this.api.getProject(this.projectId).subscribe({
         next: (p: Project) => {
-          this.project = { name: p.name, description: p.description, framework_id: p.framework?.id || 0, data_subjects_count: p.data_subjects_count, data_categories: p.data_categories || [], large_scale: p.large_scale };
+          this.project = {
+            name: p.name,
+            description: p.description,
+            framework_id: p.framework?.id || 0,
+            data_subjects_count: p.data_subjects_count,
+            data_categories: p.data_categories || [],
+            large_scale: p.large_scale,
+            // MTGE fields
+            data_volume_count: p.data_volume_count ?? 0,
+            treatment_frequency: p.treatment_frequency ?? 'puntual',
+            treatment_permanence: p.treatment_permanence ?? 'ocasional',
+            geographic_scope: p.geographic_scope ?? 'local',
+            direct_health_data: p.direct_health_data ?? false,
+            direct_systematic_profiling: p.direct_systematic_profiling ?? false,
+            direct_surveillance: p.direct_surveillance ?? false,
+            direct_biometric: p.direct_biometric ?? false,
+            direct_credit_system: p.direct_credit_system ?? false,
+            direct_minors_systematic: p.direct_minors_systematic ?? false,
+            direct_systematic_transfer: p.direct_systematic_transfer ?? false,
+            direct_courier_messaging: p.direct_courier_messaging ?? false,
+          };
           this.loadEvaluation();
           this.loadEvaluationSnapshots();
         }

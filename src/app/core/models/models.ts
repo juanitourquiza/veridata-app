@@ -27,6 +27,19 @@ export interface Project {
     user: { id: number; name: string };
     created_at: string;
     updated_at: string;
+    // MTGE fields
+    data_volume_count?: number;
+    treatment_frequency?: 'puntual' | 'periodica' | 'continua';
+    treatment_permanence?: 'ocasional' | 'temporal' | 'prolongada';
+    geographic_scope?: 'local' | 'nacional' | 'global';
+    direct_health_data?: boolean;
+    direct_systematic_profiling?: boolean;
+    direct_surveillance?: boolean;
+    direct_biometric?: boolean;
+    direct_credit_system?: boolean;
+    direct_minors_systematic?: boolean;
+    direct_systematic_transfer?: boolean;
+    direct_courier_messaging?: boolean;
 }
 
 export interface Framework { id: number; name: string; country_code: string; domains?: ControlDomain[]; }
