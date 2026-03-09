@@ -71,6 +71,7 @@ export class ApiService {
 
     // Domain CRUD (for inline editing in evaluation)
     updateDomain(domainId: number, data: { name?: string; description?: string }): Observable<ControlDomain> { return this.http.put<ControlDomain>(`${this.base}/admin/domains/${domainId}`, data); }
+    updateDomainOrder(domainId: number, order: number): Observable<ControlDomain> { return this.http.put<ControlDomain>(`${this.base}/admin/domains/${domainId}/order`, { order }); }
 
     // Users (for assignment dropdowns)
     getUsers(): Observable<{ data: User[] }> { return this.http.get<{ data: User[] }>(`${this.base}/users`); }

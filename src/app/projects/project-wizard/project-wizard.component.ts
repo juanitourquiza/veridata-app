@@ -126,8 +126,15 @@ import {
           <div class="eval-header vd-card"><h2>🔍 Evaluación de Controles</h2>
             <div class="eval-progress"><span>Progreso: {{ evaluatedCount() }}/{{ totalControls() }}</span><div class="vd-progress-bar"><div class="vd-progress-fill" [style.width.%]="evaluationProgress()"></div></div></div>
           </div>
-          @for (domain of domains(); track domain.id) {
-            <div class="vd-card domain-card">
+          @for (domain of domains(); track domain.id; let i = $index) {
+            <div class="vd-card domain-card"
+                 [class.dragging]="draggingDomain() === domain.id"
+                 [class.drag-over]="dragOverDomain() === domain.id"
+                 draggable="true"
+                 (dragstart)="onDomainDragStart($event, domain.id)"
+                 (dragover)="onDomainDragOver($event, domain.id)"
+                 (drop)="onDomainDrop($event, i)"
+                 (dragend)="onDomainDragEnd($event)">
               <div class="domain-header" (click)="!editingDomain() && toggleDomain(domain.id)">
                 @if (editingDomain() === domain.id) {
                   <div style="display:flex;gap:0.5rem;flex:1;align-items:center">
@@ -137,7 +144,10 @@ import {
                     <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="cancelEditingDomain(); $event.stopPropagation()">Cancelar</button>
                   </div>
                 } @else {
-                  <h3>{{ domain.code }} — {{ domain.name }}</h3>
+                  <div style="display:flex;align-items:center;gap:0.5rem;flex:1">
+                    <span class="drag-handle" title="Arrastrar para reordenar">⋮⋮</span>
+                    <h3>{{ domain.code }} — {{ domain.name }}</h3>
+                  </div>
                   <div style="display:flex;gap:0.5rem;align-items:center">
                     <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="startEditingDomain(domain.id); $event.stopPropagation()" title="Editar nombre">✏️</button>
                     <span class="toggle">{{ expandedDomains.has(domain.id) ? '▼' : '►' }}</span>
@@ -494,10 +504,15 @@ import {
     .eval-header { margin-bottom: 1rem; }
     .eval-progress { display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem; font-size: 0.8125rem; color: #64748b; }
     .eval-progress .vd-progress-bar { flex: 1; }
-    .domain-card { margin-bottom: 0.75rem; padding: 0; }
+    .domain-card { margin-bottom: 0.75rem; padding: 0; transition: all 0.2s; }
+    .domain-card.dragging { opacity: 0.5; transform: scale(0.98); }
+    .domain-card.drag-over { border: 2px dashed #5687f3; background: rgba(86,135,243,0.05); }
     .domain-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; cursor: pointer; border-radius: 16px; }
     .domain-header:hover { background: #f8fafc; }
     .domain-header h3 { margin: 0; font-size: 0.9375rem; }
+    .drag-handle { color: #94a3b8; cursor: grab; font-size: 1rem; user-select: none; padding: 0.25rem; }
+    .drag-handle:hover { color: #5687f3; }
+    .drag-handle:active { cursor: grabbing; }
     .toggle { color: #64748b; font-size: 0.75rem; }
     .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
     .metric { text-align: center; padding: 1.5rem; }
@@ -681,6 +696,10 @@ export class ProjectWizardComponent implements OnInit {
   editingControl = signal<number | null>(null);
   addingControlToDomain = signal<number | null>(null);
   editingDomain = signal<number | null>(null);
+
+  // Domain drag-and-drop signals
+  draggingDomain = signal<number | null>(null);
+  dragOverDomain = signal<number | null>(null);
 
   manualLargeScale: boolean | null = null;
   deliverableTab: 'pending' | 'generated' = 'pending';
@@ -1152,6 +1171,57 @@ export class ProjectWizardComponent implements OnInit {
         this.loadEvaluation();
       }
     });
+  }
+
+  // Domain drag-and-drop methods
+  onDomainDragStart(event: DragEvent, domainId: number): void {
+    this.draggingDomain.set(domainId);
+    event.dataTransfer?.setData('text/plain', domainId.toString());
+    event.dataTransfer!.effectAllowed = 'move';
+  }
+
+  onDomainDragOver(event: DragEvent, domainId: number): void {
+    event.preventDefault();
+    if (this.draggingDomain() !== domainId) {
+      this.dragOverDomain.set(domainId);
+    }
+  }
+
+  onDomainDrop(event: DragEvent, targetIndex: number): void {
+    event.preventDefault();
+    const draggedId = this.draggingDomain();
+    if (!draggedId) return;
+
+    const currentDomains = [...this.domains()];
+    const draggedIndex = currentDomains.findIndex(d => d.id === draggedId);
+
+    if (draggedIndex === -1 || draggedIndex === targetIndex) {
+      this.draggingDomain.set(null);
+      this.dragOverDomain.set(null);
+      return;
+    }
+
+    // Reordenar en la lista local
+    const [removed] = currentDomains.splice(draggedIndex, 1);
+    currentDomains.splice(targetIndex, 0, removed);
+
+    // Actualizar el signal
+    this.domains.set(currentDomains);
+
+    // Actualizar el orden en el backend
+    currentDomains.forEach((domain, index) => {
+      this.api.updateDomainOrder(domain.id, index).subscribe({
+        error: () => console.error(`Error al actualizar orden del dominio ${domain.id}`)
+      });
+    });
+
+    this.draggingDomain.set(null);
+    this.dragOverDomain.set(null);
+  }
+
+  onDomainDragEnd(event: DragEvent): void {
+    this.draggingDomain.set(null);
+    this.dragOverDomain.set(null);
   }
 
   finishProject(): void {
