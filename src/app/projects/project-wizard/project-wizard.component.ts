@@ -375,7 +375,16 @@ import {
         @if (actionItems().length === 0) { <p style="color:#64748b;text-align:center;padding:2rem;">No hay acciones generadas. Vuelve al paso anterior y genera las brechas primero.</p> }
         @for (item of actionItems(); track item.id) {
           <div class="action-item vd-card" style="margin-top:0.75rem">
-            <div class="ai-header"><div><strong>{{ item.title }}</strong><p class="ai-desc">{{ item.description }}</p></div><span class="vd-badge" [class]="'vd-badge-' + item.priority">{{ item.priority | uppercase }}</span></div>
+            <div class="ai-header">
+              <div>
+                <strong>{{ item.title }}</strong>
+                <p class="ai-desc">{{ item.description }}</p>
+              </div>
+              <div style="display:flex;gap:0.5rem;align-items:center">
+                <span class="vd-badge" [class]="'vd-badge-' + item.priority">{{ item.priority | uppercase }}</span>
+                <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="deleteActionItem(item.id)" title="Eliminar">🗑️</button>
+              </div>
+            </div>
             <div class="ai-controls">
               <div class="ai-field"><label>Estado</label>
                 <select class="vd-select" [ngModel]="item.status" (ngModelChange)="updateActionField(item.id, 'status', $event)"><option value="pendiente">Pendiente</option><option value="en_progreso">En Progreso</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select>
@@ -1011,6 +1020,21 @@ export class ProjectWizardComponent implements OnInit {
       next: (res: { action_item: ActionItem }) => {
         const items = this.actionItems().map(i => i.id === itemId ? { ...i, ...res.action_item } : i);
         this.actionItems.set(items);
+      }
+    });
+  }
+
+  deleteActionItem(itemId: number): void {
+    if (!confirm('¿Estás seguro de que deseas eliminar esta acción del plan?')) {
+      return;
+    }
+    this.api.deleteActionItem(this.projectId, itemId).subscribe({
+      next: () => {
+        const items = this.actionItems().filter(i => i.id !== itemId);
+        this.actionItems.set(items);
+      },
+      error: () => {
+        alert('Error al eliminar la acción del plan');
       }
     });
   }
