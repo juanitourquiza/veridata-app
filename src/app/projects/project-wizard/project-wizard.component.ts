@@ -180,7 +180,8 @@ import {
                             <div>
                               <div>{{ control.name }}</div>
                               <small style="color:#64748b">{{ control.statement }}</small>
-                              <span class="vd-badge" [class]="'vd-badge-' + (control.criticality === 'alto' ? 'alta' : (control.criticality === 'medio' ? 'media' : 'baja'))">{{ control.criticality | uppercase }}</span>
+                              @let effectiveImpact = getEffectiveImpact(control.criticality, control.id);
+                              <span class="vd-badge" [class]="'vd-badge-' + effectiveImpact">{{ effectiveImpact }}</span>
                             </div>
                           }
                         </td>
@@ -595,7 +596,7 @@ import {
     .eval-sidebar.collapsed .sidebar-header { margin-bottom: 0; }
     .sidebar-header h3 { margin: 0; font-size: 0.9375rem; }
     .sidebar-actions { display: flex; gap: 0.5rem; }
-    .snapshot-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .eval-sidebar.collapsed .sidebar-expand-btn .expand-text { display: none; }
     .snapshot-item { padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
     .snapshot-item:hover { border-color: #5687f3; background: #f8fafc; }
     .snapshot-item.active { border-color: #5687f3; background: rgba(86,135,243,0.08); }
