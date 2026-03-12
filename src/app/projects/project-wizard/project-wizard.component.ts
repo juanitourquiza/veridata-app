@@ -445,6 +445,7 @@ import {
                 } @else {
                   <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadDeliverablePdf(selectedDeliverable()!.id)">📄 PDF</button>
                   <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadDeliverableWord(selectedDeliverable()!.id)">📝 Word</button>
+                  <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadDeliverableExcel(selectedDeliverable()!.id)" title="Descargar plantilla Excel del dominio">📊 Excel</button>
                   <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="generateDeliverableContent(selectedDeliverable()!.id)" [disabled]="generatingDeliverableContent() === selectedDeliverable()!.id">🔄 Regenerar</button>
                 }
               </div>
@@ -1134,6 +1135,22 @@ export class ProjectWizardComponent implements OnInit {
         window.URL.revokeObjectURL(url);
       },
       error: () => alert('Error al descargar el Word. Asegúrate de que el contenido esté generado.')
+    });
+  }
+
+  downloadDeliverableExcel(delivId: number): void {
+    this.api.downloadDeliverableExcel(this.projectId, delivId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `plantilla_${delivId}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => alert('No se encontró plantilla Excel para este dominio.')
     });
   }
 

@@ -42,6 +42,7 @@ export class ApiService {
     generateDeliverableContent(projectId: number, delivId: number): Observable<{ deliverable: Deliverable; generated_by: string; provider?: string }> { return this.http.post<{ deliverable: Deliverable; generated_by: string; provider?: string }>(`${this.base}/projects/${projectId}/deliverables/${delivId}/generate-content`, {}); }
     downloadDeliverablePdf(projectId: number, delivId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/deliverables/${delivId}/download-pdf`, { responseType: 'blob' }); }
     downloadDeliverableWord(projectId: number, delivId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/deliverables/${delivId}/download-word`, { responseType: 'blob' }); }
+    downloadDeliverableExcel(projectId: number, delivId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/deliverables/${delivId}/download-excel`, { responseType: 'blob' }); }
 
     // Action Plan Reports
     downloadActionPlanPdf(projectId: number): Observable<Blob> { return this.http.get(`${this.base}/projects/${projectId}/action-plan/pdf`, { responseType: 'blob' }); }
