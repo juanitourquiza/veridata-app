@@ -29,6 +29,7 @@ export class ApiService {
     generateActionPlan(projectId: number): Observable<{ action_items: ActionItem[]; total: number }> { return this.http.post<{ action_items: ActionItem[]; total: number }>(`${this.base}/projects/${projectId}/action-plan`, {}); }
     updateActionItem(projectId: number, itemId: number, data: Partial<ActionItem>): Observable<{ action_item: ActionItem }> { return this.http.put<{ action_item: ActionItem }>(`${this.base}/projects/${projectId}/action-plan/${itemId}`, data); }
     deleteActionItem(projectId: number, itemId: number): Observable<void> { return this.http.delete<void>(`${this.base}/projects/${projectId}/action-plan/${itemId}`); }
+    reorderActionItems(projectId: number, orders: { id: number; order: number }[]): Observable<{ message: string }> { return this.http.post<{ message: string }>(`${this.base}/projects/${projectId}/action-plan/reorder`, { orders }); }
 
     // Reports
     generateExecutiveReport(projectId: number): Observable<ExecutiveReport> { return this.http.post<ExecutiveReport>(`${this.base}/projects/${projectId}/reports/executive-ai`, {}); }

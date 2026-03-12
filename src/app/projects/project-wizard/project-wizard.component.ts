@@ -368,37 +368,97 @@ import {
               <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadActionPlanPdf()">📄 PDF</button>
               <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadActionPlanWord()">📝 Word</button>
             }
-            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="shareProject()">� Compartir</button>
+            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="shareProject()">🔗 Compartir</button>
             <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="goToStep(5)">Entregables →</button>
           </div>
         </div>
         @if (actionItems().length === 0) { <p style="color:#64748b;text-align:center;padding:2rem;">No hay acciones generadas. Vuelve al paso anterior y genera las brechas primero.</p> }
-        @for (item of actionItems(); track item.id) {
-          <div class="action-item vd-card" style="margin-top:0.75rem">
-            <div class="ai-header">
-              <div>
-                <strong>{{ item.title }}</strong>
-                <p class="ai-desc">{{ item.description }}</p>
-              </div>
-              <div style="display:flex;gap:0.5rem;align-items:center">
-                <span class="vd-badge" [class]="'vd-badge-' + item.priority">{{ item.priority | uppercase }}</span>
-                <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="deleteActionItem(item.id)" title="Eliminar">🗑️</button>
-              </div>
-            </div>
-            <div class="ai-controls">
-              <div class="ai-field"><label>Estado</label>
-                <select class="vd-select" [ngModel]="item.status" (ngModelChange)="updateActionField(item.id, 'status', $event)"><option value="pendiente">Pendiente</option><option value="en_progreso">En Progreso</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select>
-              </div>
-              <div class="ai-field"><label>Prioridad</label>
-                <select class="vd-select" [ngModel]="item.priority" (ngModelChange)="updateActionField(item.id, 'priority', $event)"><option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option></select>
-              </div>
-              <div class="ai-field"><label>Responsable</label>
-                <select class="vd-select" [ngModel]="item.assigned_to" (ngModelChange)="updateActionField(item.id, 'assigned_to', $event)"><option [ngValue]="null">Sin asignar</option>@for (u of teamUsers(); track u.id) { <option [ngValue]="u.id">{{ u.name }}</option> }</select>
-              </div>
-              <div class="ai-field"><label>Fecha objetivo</label>
-                <input type="date" class="vd-input" [ngModel]="item.due_date ? item.due_date.split('T')[0] : ''" (ngModelChange)="updateActionField(item.id, 'due_date', $event)">
+
+        <!-- Group by Domain -->
+        @for (domain of actionItemDomains(); track domain) {
+          <div class="action-domain-section">
+            <div class="action-domain-header" (click)="toggleActionDomain(domain)">
+              <div style="display:flex;align-items:center;gap:0.5rem">
+                <span class="toggle">{{ expandedActionDomains.has(domain) ? '▼' : '▶' }}</span>
+                <strong>{{ domain }}</strong>
+                <span class="vd-badge vd-badge-sm">{{ (actionItemsByDomain().get(domain) || []).length }} items</span>
               </div>
             </div>
+
+            @if (expandedActionDomains.has(domain)) {
+              <div class="action-items-list">
+                @for (item of actionItemsByDomain().get(domain) || []; track item.id; let i = $index) {
+                  <div class="action-item vd-card"
+                       [class.dragging]="draggingActionItem() === item.id"
+                       [class.drag-over]="dragOverActionItem() === item.id"
+                       draggable="true"
+                       (dragstart)="onActionItemDragStart($event, item.id)"
+                       (dragover)="onActionItemDragOver($event, item.id)"
+                       (drop)="onActionItemDrop($event, domain, i)"
+                       (dragend)="onActionItemDragEnd($event)"
+                       style="margin-top:0.5rem">
+
+                    <!-- Drag Handle -->
+                    <div class="drag-handle" style="cursor:grab;padding:0.25rem;color:#94a3b8;" title="Arrastrar para reordenar">⋮⋮</div>
+
+                    <div class="ai-header">
+                      <div style="flex:1">
+                        <!-- Editable Title -->
+                        @if (editingActionItem() === item.id) {
+                          <input class="vd-input" style="font-weight:600;margin-bottom:0.5rem;"
+                                 [ngModel]="editingActionTitle()"
+                                 (ngModelChange)="editingActionTitle.set($event)"
+                                 placeholder="Título de la acción">
+                        } @else {
+                          <strong (click)="startEditingActionItem(item)" style="cursor:pointer;" title="Click para editar">{{ item.title }}</strong>
+                        }
+
+                        <!-- Editable Description -->
+                        @if (editingActionItem() === item.id) {
+                          <textarea class="vd-input" rows="2" style="margin-bottom:0.5rem;"
+                                    [ngModel]="editingActionDescription()"
+                                    (ngModelChange)="editingActionDescription.set($event)"
+                                    placeholder="Descripción de la acción"></textarea>
+                          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
+                            <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="saveActionItemEdit(item.id)">💾 Guardar</button>
+                            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="cancelEditingActionItem()">✕ Cancelar</button>
+                          </div>
+                        } @else {
+                          <p class="ai-desc" (click)="startEditingActionItem(item)" style="cursor:pointer;" title="Click para editar">{{ item.description }}</p>
+                        }
+                      </div>
+
+                      <div style="display:flex;gap:0.5rem;align-items:center">
+                        <!-- Priority Badge with Precalculated Value -->
+                        <span class="vd-badge" [class]="'vd-badge-' + item.priority" title="Prioridad basada en la evaluación (editable)">{{ item.priority | uppercase }}</span>
+                        <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="deleteActionItem(item.id)" title="Eliminar">🗑️</button>
+                      </div>
+                    </div>
+
+                    <div class="ai-controls">
+                      <div class="ai-field"><label>Estado</label>
+                        <select class="vd-select" [ngModel]="item.status" (ngModelChange)="updateActionField(item.id, 'status', $event)"><option value="pendiente">Pendiente</option><option value="en_progreso">En Progreso</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select>
+                      </div>
+                      <div class="ai-field"><label>Prioridad</label>
+                        <select class="vd-select" [ngModel]="item.priority" (ngModelChange)="updateActionField(item.id, 'priority', $event)">
+                          <option value="critica">Crítica</option>
+                          <option value="alta">Alta</option>
+                          <option value="media">Media</option>
+                          <option value="baja">Baja</option>
+                          <option value="opcional">Opcional</option>
+                        </select>
+                      </div>
+                      <div class="ai-field"><label>Responsable</label>
+                        <select class="vd-select" [ngModel]="item.assigned_to" (ngModelChange)="updateActionField(item.id, 'assigned_to', $event)"><option [ngValue]="null">Sin asignar</option>@for (u of teamUsers(); track u.id) { <option [ngValue]="u.id">{{ u.name }}</option> }</select>
+                      </div>
+                      <div class="ai-field"><label>Fecha objetivo</label>
+                        <input type="date" class="vd-input" [ngModel]="item.due_date ? item.due_date.split('T')[0] : ''" (ngModelChange)="updateActionField(item.id, 'due_date', $event)">
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
           </div>
         }
       </div>
@@ -563,7 +623,13 @@ import {
     .report-meta { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
 
     /* Action Plan */
-    .action-item { padding: 1rem !important; border: 1px solid #e2e8f0; }
+    .action-item { padding: 1rem !important; border: 1px solid #e2e8f0; transition: all 0.2s; }
+    .action-item.dragging { opacity: 0.5; transform: scale(0.98); }
+    .action-item.drag-over { border: 2px dashed #5687f3; background: rgba(86,135,243,0.05); }
+    .action-domain-section { margin-bottom: 1rem; }
+    .action-domain-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; margin-bottom: 0.5rem; font-size: 0.9375rem; }
+    .action-domain-header:hover { background: #f1f5f9; border-color: #cbd5e1; }
+    .action-items-list { padding-left: 0.5rem; }
     .ai-header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
     .ai-desc { color: #64748b; font-size: 0.8125rem; margin: 0.25rem 0 0.75rem; }
     .ai-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
@@ -718,8 +784,54 @@ export class ProjectWizardComponent implements OnInit {
   draggingDomain = signal<number | null>(null);
   dragOverDomain = signal<number | null>(null);
 
+  // Action Item editing signals
+  editingActionItem = signal<number | null>(null);
+  editingActionTitle = signal<string>('');
+  editingActionDescription = signal<string>('');
+
+  // Action Item drag-and-drop signals
+  draggingActionItem = signal<number | null>(null);
+  dragOverActionItem = signal<number | null>(null);
+  expandedActionDomains = new Set<string>();
+
   manualLargeScale: boolean | null = null;
   deliverableTab: 'pending' | 'generated' = 'pending';
+
+  // Computed: Group action items by domain
+  actionItemsByDomain = computed(() => {
+    const items = this.actionItems();
+    const grouped = new Map<string, ActionItem[]>();
+
+    items.forEach(item => {
+      const domain = item.domain || 'Sin dominio';
+      if (!grouped.has(domain)) {
+        grouped.set(domain, []);
+      }
+      grouped.get(domain)!.push(item);
+    });
+
+    // Sort items within each domain by order
+    grouped.forEach((domainItems) => {
+      domainItems.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    });
+
+    return grouped;
+  });
+
+  // Get unique domains sorted by their first item's order
+  actionItemDomains = computed(() => {
+    const grouped = this.actionItemsByDomain();
+    const domains = Array.from(grouped.keys());
+
+    // Sort domains by the minimum order of their items
+    return domains.sort((a, b) => {
+      const aItems = grouped.get(a) || [];
+      const bItems = grouped.get(b) || [];
+      const aMinOrder = aItems.length > 0 ? (aItems[0].order ?? Infinity) : Infinity;
+      const bMinOrder = bItems.length > 0 ? (bItems[0].order ?? Infinity) : Infinity;
+      return aMinOrder - bMinOrder;
+    });
+  });
 
   dataCategories = ['Identificación', 'Contacto', 'Financieros', 'Salud', 'Biométricos', 'Geolocalización', 'Ideología', 'Orientación sexual', 'Origen étnico', 'Antecedentes penales', 'Datos de menores'];
 
@@ -1066,6 +1178,122 @@ export class ProjectWizardComponent implements OnInit {
         alert('Error al eliminar la acción del plan');
       }
     });
+  }
+
+  // Action Domain toggle
+  toggleActionDomain(domain: string): void {
+    this.expandedActionDomains.has(domain) ? this.expandedActionDomains.delete(domain) : this.expandedActionDomains.add(domain);
+  }
+
+  // Action Item editing methods
+  startEditingActionItem(item: ActionItem): void {
+    this.editingActionItem.set(item.id);
+    this.editingActionTitle.set(item.title);
+    this.editingActionDescription.set(item.description || '');
+  }
+
+  cancelEditingActionItem(): void {
+    this.editingActionItem.set(null);
+    this.editingActionTitle.set('');
+    this.editingActionDescription.set('');
+  }
+
+  saveActionItemEdit(itemId: number): void {
+    const title = this.editingActionTitle().trim();
+    const description = this.editingActionDescription().trim();
+
+    if (!title) {
+      alert('El título no puede estar vacío');
+      return;
+    }
+
+    this.api.updateActionItem(this.projectId, itemId, {
+      title,
+      description
+    }).subscribe({
+      next: (res: { action_item: ActionItem }) => {
+        const items = this.actionItems().map(i => i.id === itemId ? { ...i, ...res.action_item } : i);
+        this.actionItems.set(items);
+        this.editingActionItem.set(null);
+        this.editingActionTitle.set('');
+        this.editingActionDescription.set('');
+      },
+      error: () => {
+        alert('Error al guardar los cambios');
+      }
+    });
+  }
+
+  // Action Item drag-and-drop methods
+  onActionItemDragStart(event: DragEvent, itemId: number): void {
+    this.draggingActionItem.set(itemId);
+    event.dataTransfer?.setData('text/plain', itemId.toString());
+    event.dataTransfer!.effectAllowed = 'move';
+  }
+
+  onActionItemDragOver(event: DragEvent, itemId: number): void {
+    event.preventDefault();
+    if (this.draggingActionItem() !== itemId) {
+      this.dragOverActionItem.set(itemId);
+    }
+  }
+
+  onActionItemDrop(event: DragEvent, domain: string, targetIndex: number): void {
+    event.preventDefault();
+    const draggedId = this.draggingActionItem();
+    if (!draggedId) return;
+
+    const currentItems = [...this.actionItems()];
+    const draggedItem = currentItems.find(i => i.id === draggedId);
+
+    if (!draggedItem || draggedItem.domain !== domain) {
+      this.draggingActionItem.set(null);
+      this.dragOverActionItem.set(null);
+      return;
+    }
+
+    // Get items in the same domain
+    const domainItems = currentItems.filter(i => i.domain === domain).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const draggedIndex = domainItems.findIndex(i => i.id === draggedId);
+
+    if (draggedIndex === -1 || draggedIndex === targetIndex) {
+      this.draggingActionItem.set(null);
+      this.dragOverActionItem.set(null);
+      return;
+    }
+
+    // Reorder domain items array
+    const [removed] = domainItems.splice(draggedIndex, 1);
+    domainItems.splice(targetIndex, 0, removed);
+
+    // Create new order array for API
+    const orders = domainItems.map((item, index) => ({
+      id: item.id,
+      order: index + 1
+    }));
+
+    // Update local state with new orders
+    const updatedItems = currentItems.map(item => {
+      const orderUpdate = orders.find(o => o.id === item.id);
+      if (orderUpdate) {
+        return { ...item, order: orderUpdate.order };
+      }
+      return item;
+    });
+    this.actionItems.set(updatedItems);
+
+    // Save to backend
+    this.api.reorderActionItems(this.projectId, orders).subscribe({
+      error: () => console.error('Error al reordenar action items')
+    });
+
+    this.draggingActionItem.set(null);
+    this.dragOverActionItem.set(null);
+  }
+
+  onActionItemDragEnd(event: DragEvent): void {
+    this.draggingActionItem.set(null);
+    this.dragOverActionItem.set(null);
   }
 
   generateDeliverablesList(): void {

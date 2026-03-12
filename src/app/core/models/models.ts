@@ -51,11 +51,13 @@ export interface Gap { id: number; project_id: number; domain: string; control_c
 
 export interface ActionItem {
     id: number; project_id: number; gap_id: number;
+    domain?: string;
     title: string; description: string;
     priority: 'critica' | 'alta' | 'media' | 'baja' | 'opcional';
     status: 'pendiente' | 'en_progreso' | 'completada' | 'cancelada';
     assigned_to: number | null; assignee?: User;
     due_date: string | null; gap?: Gap;
+    order?: number;
 }
 
 export interface ExecutiveReport {
