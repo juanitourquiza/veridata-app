@@ -454,7 +454,6 @@ import {
                       </div>
                       <div class="ai-field"><label>Prioridad</label>
                         <select class="vd-select" [ngModel]="item.priority" (ngModelChange)="updateActionField(item.id, 'priority', $event)">
-                          <option value="critica">Crítica</option>
                           <option value="alta">Alta</option>
                           <option value="media">Media</option>
                           <option value="baja">Baja</option>
