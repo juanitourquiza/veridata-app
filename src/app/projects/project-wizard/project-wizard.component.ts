@@ -378,11 +378,24 @@ import {
         @for (domain of actionItemDomains(); track domain) {
           <div class="action-domain-section">
             <div class="action-domain-header" (click)="toggleActionDomain(domain)">
-              <div style="display:flex;align-items:center;gap:0.5rem">
-                <span class="toggle">{{ expandedActionDomains.has(domain) ? '▼' : '▶' }}</span>
-                <strong>{{ domain }}</strong>
-                <span class="vd-badge vd-badge-sm">{{ (actionItemsByDomain().get(domain) || []).length }} items</span>
-              </div>
+                        <!-- Editable Domain Title -->
+                        @if (editingActionDomain() === domain) {
+                          <div style="display:flex;align-items:center;gap:0.5rem;flex:1">
+                            <span class="toggle">{{ expandedActionDomains.has(domain) ? '▼' : '▶' }}</span>
+                            <input class="vd-input" style="flex:1;"
+                                   [ngModel]="editingActionDomainTitle()"
+                                   (ngModelChange)="editingActionDomainTitle.set($event)"
+                                   placeholder="Nombre del dominio">
+                            <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="saveActionDomainTitle(domain)">💾 Guardar</button>
+                            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="cancelEditingActionDomain()">✕ Cancelar</button>
+                          </div>
+                        } @else {
+                          <div style="display:flex;align-items:center;gap:0.5rem;flex:1" (click)="startEditingActionDomain(domain)" style="cursor:pointer;" title="Click para editar nombre del dominio">
+                            <span class="toggle">{{ expandedActionDomains.has(domain) ? '▼' : '▶' }}</span>
+                            <strong>{{ getDomainDisplayName(domain) }}</strong>
+                            <span class="vd-badge vd-badge-sm">{{ (actionItemsByDomain().get(domain) || []).length }} items</span>
+                          </div>
+                        }
             </div>
 
             @if (expandedActionDomains.has(domain)) {
@@ -784,7 +797,9 @@ export class ProjectWizardComponent implements OnInit {
   draggingDomain = signal<number | null>(null);
   dragOverDomain = signal<number | null>(null);
 
-  // Action Item editing signals
+  // Domain title editing signals for Action Plan
+  editingActionDomain = signal<string | null>(null);
+  editingActionDomainTitle = signal<string>('');
   editingActionItem = signal<number | null>(null);
   editingActionTitle = signal<string>('');
   editingActionDescription = signal<string>('');
@@ -1185,7 +1200,56 @@ export class ProjectWizardComponent implements OnInit {
     this.expandedActionDomains.has(domain) ? this.expandedActionDomains.delete(domain) : this.expandedActionDomains.add(domain);
   }
 
-  // Action Item editing methods
+  // Get domain display name (code + name from domains list)
+  getDomainDisplayName(domainCode: string): string {
+    const domain = this.domains().find(d => d.code === domainCode);
+    return domain ? `${domainCode} — ${domain.name}` : domainCode;
+  }
+
+  // Action Domain editing methods
+  startEditingActionDomain(domain: string): void {
+    this.editingActionDomain.set(domain);
+    this.editingActionDomainTitle.set(this.getDomainDisplayName(domain));
+  }
+
+  cancelEditingActionDomain(): void {
+    this.editingActionDomain.set(null);
+    this.editingActionDomainTitle.set('');
+  }
+
+  saveActionDomainTitle(domain: string): void {
+    const title = this.editingActionDomainTitle().trim();
+
+    if (!title) {
+      alert('El nombre del dominio no puede estar vacío');
+      return;
+    }
+
+    // Extract just the name part (after the dash if present)
+    const newName = title.includes('—') ? title.split('—')[1].trim() : title;
+
+    // Find the domain in the list to get the id
+    const domainObj = this.domains().find(d => d.code === domain);
+    if (!domainObj) {
+      alert('No se encontró el dominio para actualizar');
+      return;
+    }
+
+    this.api.updateDomain(domainObj.id, { name: newName }).subscribe({
+      next: () => {
+        // Update the domain in the local list
+        const updatedDomains = this.domains().map(d =>
+          d.id === domainObj.id ? { ...d, name: newName } : d
+        );
+        this.domains.set(updatedDomains);
+        this.editingActionDomain.set(null);
+        this.editingActionDomainTitle.set('');
+      },
+      error: () => {
+        alert('Error al guardar el nombre del dominio');
+      }
+    });
+  }
   startEditingActionItem(item: ActionItem): void {
     this.editingActionItem.set(item.id);
     this.editingActionTitle.set(item.title);
