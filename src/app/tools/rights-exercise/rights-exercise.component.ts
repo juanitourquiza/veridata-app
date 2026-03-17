@@ -1,0 +1,405 @@
+import { Component, signal, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { PdpToolsService } from '../pdp-tools.service';
+
+// Rights Exercise Component - Registro de Ejercicio de Derechos
+
+@Component({
+  selector: 'app-rights-exercise',
+  imports: [CommonModule, FormsModule],
+  template: `
+    <div class="tools-container">
+      <header class="tools-header">
+        <h1>📝 Registro de Ejercicio de Derechos</h1>
+        <p class="tools-subtitle">Matriz de seguimiento de solicitudes de ejercicio de derechos según LOPDP Ecuador</p>
+      </header>
+
+      <!-- Form Header Info -->
+      <div class="vd-card form-header">
+        <div class="form-header-grid">
+          <div class="form-group">
+            <label class="vd-label">Código del registro</label>
+            <input class="vd-input" [ngModel]="registryInfo().code" (ngModelChange)="updateRegistryInfo('code', $event)" placeholder="Ej: RED-2026-001">
+          </div>
+          <div class="form-group">
+            <label class="vd-label">Versión</label>
+            <input class="vd-input" [ngModel]="registryInfo().version" (ngModelChange)="updateRegistryInfo('version', $event)" placeholder="1.0">
+          </div>
+          <div class="form-group">
+            <label class="vd-label">Fecha</label>
+            <input type="date" class="vd-input" [ngModel]="registryInfo().date" (ngModelChange)="updateRegistryInfo('date', $event)">
+          </div>
+          <div class="form-group">
+            <label class="vd-label">Responsable / Área</label>
+            <input class="vd-input" [ngModel]="registryInfo().responsible" (ngModelChange)="updateRegistryInfo('responsible', $event)" placeholder="Área responsable">
+          </div>
+        </div>
+      </div>
+
+      <!-- New Request Form -->
+      <div class="vd-card">
+        <h3>➕ Nueva Solicitud de Ejercicio de Derechos</h3>
+        <div class="new-request-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="vd-label">Fecha de recepción *</label>
+              <input type="date" class="vd-input" [ngModel]="newRequest().received_date" (ngModelChange)="updateNewRequest('received_date', $event)">
+            </div>
+            <div class="form-group">
+              <label class="vd-label">Canal de recepción *</label>
+              <select class="vd-select" [ngModel]="newRequest().channel" (ngModelChange)="updateNewRequest('channel', $event)">
+                <option value="">Seleccionar...</option>
+                <option value="email">Correo electrónico</option>
+                <option value="form">Formulario web</option>
+                <option value="phone">Teléfono</option>
+                <option value="in_person">Presencial</option>
+                <option value="letter">Carta física</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="vd-label">Tipo de solicitante *</label>
+              <select class="vd-select" [ngModel]="newRequest().requester_type" (ngModelChange)="updateNewRequest('requester_type', $event)">
+                <option value="">Seleccionar...</option>
+                <option value="titular">Titular de datos</option>
+                <option value="representante">Representante legal</option>
+                <option value="tutor">Tutor/curador</option>
+                <option value="heredero">Causahabiente</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="vd-label">Nombre del titular/solicitante *</label>
+              <input class="vd-input" [ngModel]="newRequest().requester_name" (ngModelChange)="updateNewRequest('requester_name', $event)" placeholder="Nombre completo">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="vd-label">Derecho ejercido *</label>
+              <select class="vd-select" [ngModel]="newRequest().right_type" (ngModelChange)="updateNewRequest('right_type', $event)">
+                <option value="">Seleccionar...</option>
+                <option value="acceso">ACCESO (Art. 27)</option>
+                <option value="rectificacion">RECTIFICACIÓN (Art. 28)</option>
+                <option value="supresion">SUPRESIÓN / DERECHO AL OLVIDO (Art. 29)</option>
+                <option value="oposicion">OPOSICIÓN (Art. 30)</option>
+                <option value="portabilidad">PORTABILIDAD (Art. 31)</option>
+                <option value="informacion">INFORMACIÓN (Art. 26)</option>
+                <option value="decision_automatizada">NO SER OBJETO DE DECISIONES AUTOMATIZADAS (Art. 32)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="vd-label">Área responsable</label>
+              <input class="vd-input" [ngModel]="newRequest().responsible_area" (ngModelChange)="updateNewRequest('responsible_area', $event)" placeholder="Área que atiende">
+            </div>
+            <div class="form-group">
+              <label class="vd-label">¿Requiere aclaración?</label>
+              <select class="vd-select" [ngModel]="newRequest().requires_clarification" (ngModelChange)="updateNewRequest('requires_clarification', $event)">
+                <option [ngValue]="false">No</option>
+                <option [ngValue]="true">Sí</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group full">
+              <label class="vd-label">Descripción de la solicitud</label>
+              <textarea class="vd-input" rows="3" [ngModel]="newRequest().description" (ngModelChange)="updateNewRequest('description', $event)" placeholder="Detalle de lo solicitado..."></textarea>
+            </div>
+          </div>
+
+          <button class="vd-btn vd-btn-primary" (click)="addRequest()">➕ Agregar solicitud</button>
+        </div>
+      </div>
+
+      <!-- Requests Table -->
+      <div class="vd-card">
+        <div class="section-header">
+          <h3>📊 Solicitudes Registradas</h3>
+          <div class="filters">
+            <select class="vd-select vd-select-sm" [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event); applyFilter()">
+              <option value="">Todos los estados</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="en_proceso">En proceso</option>
+              <option value="respondida">Respondida</option>
+              <option value="cerrada">Cerrada</option>
+            </select>
+            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="exportRequests()">📥 Exportar</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="vd-table rights-table">
+            <thead>
+              <tr>
+                <th style="width: 60px">ID</th>
+                <th style="width: 100px">Fecha rec.</th>
+                <th style="width: 100px">Canal</th>
+                <th style="width: 120px">Solicitante</th>
+                <th style="width: 150px">Derecho</th>
+                <th style="width: 120px">Área</th>
+                <th style="width: 100px">Estado</th>
+                <th style="width: 100px">Resultado</th>
+                <th style="width: 110px">Fecha límite</th>
+                <th style="width: 110px">Fecha resp.</th>
+                <th>Observaciones</th>
+                <th style="width: 80px">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (request of filteredRequests(); track request.id) {
+                <tr [class.overdue]="isOverdue(request)">
+                  <td><strong>{{ request.code }}</strong></td>
+                  <td>{{ request.received_date | date:'dd/MM/yy' }}</td>
+                  <td>{{ request.channel }}</td>
+                  <td>{{ request.requester_name }}</td>
+                  <td><span class="right-badge" [class]="'right-' + request.right_type">{{ getRightLabel(request.right_type) }}</span></td>
+                  <td>{{ request.responsible_area }}</td>
+                  <td>
+                    <select class="vd-select vd-select-sm" [ngModel]="request.status" (ngModelChange)="updateRequestField(request.id, 'status', $event); updateStatus(request)">
+                      <option value="pendiente">⏳ Pendiente</option>
+                      <option value="en_proceso">🔄 En proceso</option>
+                      <option value="respondida">✅ Respondida</option>
+                      <option value="cerrada">📋 Cerrada</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="vd-select vd-select-sm" [ngModel]="request.result" (ngModelChange)="updateRequestField(request.id, 'result', $event)">
+                      <option value="">Pendiente</option>
+                      <option value="accede">✅ Accede</option>
+                      <option value="parcial">⚠️ Parcial</option>
+                      <option value="deniega">❌ Deniega</option>
+                      <option value="inadmisible">⛔ Inadmisible</option>
+                    </select>
+                  </td>
+                  <td [class.overdue-date]="isOverdue(request)">{{ request.deadline_date | date:'dd/MM/yy' }}</td>
+                  <td>{{ request.response_date | date:'dd/MM/yy' }}</td>
+                  <td><input class="vd-input vd-input-sm" [ngModel]="request.observations" (ngModelChange)="updateRequestField(request.id, 'observations', $event)" placeholder="Notas..."></td>
+                  <td><button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="deleteRequest(request.id)">🗑️</button></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Statistics -->
+      <div class="vd-card">
+        <h3>📈 Estadísticas de Ejercicio de Derechos</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-number">{{ totalRequests() }}</span>
+            <span class="stat-label">Total solicitudes</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ pendingRequests() }}</span>
+            <span class="stat-label">Pendientes</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ overdueRequests() }}</span>
+            <span class="stat-label">Vencidas (SLA)</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ avgResponseTime() }} días</span>
+            <span class="stat-label">Tiempo promedio respuesta</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ requestsByRight('acceso') }}</span>
+            <span class="stat-label">Acceso</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ requestsByRight('supresion') }}</span>
+            <span class="stat-label">Supresión</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`
+    .tools-container { max-width: 1400px; margin: 0 auto; }
+    .tools-header { margin-bottom: 1.5rem; }
+    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0 0 0.5rem; }
+    .tools-subtitle { color: #64748b; font-size: 0.875rem; }
+    .form-header-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+    .new-request-form { display: flex; flex-direction: column; gap: 1rem; }
+    .form-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+    .form-row .full { grid-column: span 4; }
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .section-header h3 { margin: 0; }
+    .filters { display: flex; gap: 0.5rem; }
+    .table-container { overflow-x: auto; }
+    .rights-table { min-width: 1400px; }
+    .rights-table th { font-size: 0.6875rem; background: #f8fafc; }
+    .rights-table td { padding: 0.5rem; font-size: 0.75rem; }
+    .rights-table tr.overdue { background: rgba(239,68,68,0.05); }
+    .overdue-date { color: #dc2626; font-weight: 600; }
+    .vd-select-sm { padding: 0.25rem; font-size: 0.75rem; }
+    .vd-input-sm { padding: 0.25rem; font-size: 0.75rem; }
+    .right-badge { font-size: 0.625rem; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 500; }
+    .right-acceso { background: rgba(86,135,243,0.1); color: #5687f3; }
+    .right-rectificacion { background: rgba(245,158,11,0.1); color: #d97706; }
+    .right-supresion { background: rgba(239,68,68,0.1); color: #dc2626; }
+    .right-oposicion { background: rgba(34,197,94,0.1); color: #16a34a; }
+    .right-portabilidad { background: rgba(139,92,246,0.1); color: #8b5cf6; }
+    .right-informacion { background: rgba(100,116,139,0.1); color: #64748b; }
+    .right-decision_automatizada { background: rgba(236,72,153,0.1); color: #ec4899; }
+    .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; }
+    .stat-item { text-align: center; padding: 1rem; background: #f8fafc; border-radius: 8px; }
+    .stat-number { display: block; font-size: 1.5rem; font-weight: 700; color: #5687f3; }
+    .stat-label { font-size: 0.75rem; color: #64748b; }
+  `],
+})
+export class RightsExerciseComponent implements OnInit {
+  registryInfo = signal<any>({ code: '', version: '1.0', date: new Date().toISOString().split('T')[0], responsible: '' });
+  requests = signal<any[]>([]);
+  newRequest = signal<any>({
+    received_date: '',
+    channel: '',
+    requester_type: '',
+    requester_name: '',
+    right_type: '',
+    responsible_area: '',
+    requires_clarification: false,
+    description: ''
+  });
+  filterStatus = signal<string>('');
+  loading = signal(false);
+
+  private pdpToolsService = inject(PdpToolsService);
+
+  ngOnInit(): void {
+    this.loadRequests();
+  }
+
+  loadRequests(): void {
+    this.loading.set(true);
+    const params = this.filterStatus() ? { status: this.filterStatus() } : {};
+
+    this.pdpToolsService.getRightsRequests(params).subscribe({
+      next: (res: any) => {
+        this.requests.set(res.data || []);
+        this.loading.set(false);
+      },
+      error: (err: any) => {
+        console.error('Error loading requests:', err);
+        this.loading.set(false);
+      }
+    });
+  }
+
+  getRightLabel(rightType: string): string {
+    const labels: any = {
+      'acceso': 'ACCESO',
+      'rectificacion': 'RECTIF.',
+      'supresion': 'SUPRESIÓN',
+      'oposicion': 'OPOSICIÓN',
+      'portabilidad': 'PORTAB.',
+      'informacion': 'INFO.',
+      'decision_automatizada': 'NO AUTO.'
+    };
+    return labels[rightType] || rightType;
+  }
+
+  calculateDeadline(receivedDate: string): string {
+    if (!receivedDate) return '';
+    const date = new Date(receivedDate);
+    date.setDate(date.getDate() + 15); // 15 days SLA
+    return date.toISOString().split('T')[0];
+  }
+
+  isOverdue(request: any): boolean {
+    if (!request.deadline_date || request.status === 'respondida' || request.status === 'cerrada') return false;
+    return new Date(request.deadline_date) < new Date();
+  }
+
+  addRequest(): void {
+    const deadline = new Date();
+    deadline.setDate(deadline.getDate() + 15);
+
+    this.pdpToolsService.createRightsRequest({
+      received_date: this.newRequest().received_date,
+      channel: this.newRequest().channel,
+      requester_type: this.newRequest().requester_type,
+      requester_name: this.newRequest().requester_name,
+      right_type: this.newRequest().right_type,
+      responsible_area: this.newRequest().responsible_area,
+      description: this.newRequest().description,
+      requires_clarification: this.newRequest().requires_clarification
+    }).subscribe({
+      next: () => {
+        alert('Solicitud registrada');
+        this.loadRequests();
+        this.newRequest.set({ received_date: '', channel: '', requester_type: '', requester_name: '', right_type: '', responsible_area: '', requires_clarification: false, description: '' });
+      },
+      error: (err: any) => alert('Error al guardar: ' + err.message)
+    });
+  }
+
+  deleteRequest(id: number): void {
+    if (confirm('¿Eliminar esta solicitud?')) {
+      this.requests.update(reqs => reqs.filter(r => r.id !== id));
+    }
+  }
+
+  updateStatus(request: any): void {
+    const data: any = { status: request.status };
+    if (request.status === 'respondida' && !request.response_date) {
+      data.response_date = new Date().toISOString().split('T')[0];
+      request.response_date = data.response_date;
+    }
+    if (request.result) {
+      data.result = request.result;
+    }
+    if (request.response_content) {
+      data.response_content = request.response_content;
+    }
+
+    this.pdpToolsService.updateRightsRequest(request.id, data).subscribe({
+      next: () => {
+        // Status updated
+      },
+      error: (err: any) => alert('Error al actualizar: ' + err.message)
+    });
+  }
+
+  filteredRequests(): any[] {
+    if (!this.filterStatus()) return this.requests();
+    return this.requests().filter(r => r.status === this.filterStatus());
+  }
+
+  applyFilter(): void {
+    this.loadRequests();
+  }
+
+  totalRequests(): number { return this.requests().length; }
+  pendingRequests(): number { return this.requests().filter(r => r.status !== 'respondida' && r.status !== 'cerrada').length; }
+  overdueRequests(): number { return this.requests().filter(r => this.isOverdue(r)).length; }
+  avgResponseTime(): number {
+    const responded = this.requests().filter(r => r.response_date && r.received_date);
+    if (responded.length === 0) return 0;
+    const totalDays = responded.reduce((sum, r) => {
+      const received = new Date(r.received_date);
+      const response = new Date(r.response_date);
+      return sum + Math.ceil((response.getTime() - received.getTime()) / (1000 * 60 * 60 * 24));
+    }, 0);
+    return Math.round(totalDays / responded.length);
+  }
+  requestsByRight(rightType: string): number { return this.requests().filter(r => r.right_type === rightType).length; }
+
+  exportRequests(): void { alert('Exportando solicitudes...'); }
+
+  updateNewRequest(field: string, value: any): void {
+    this.newRequest.update(req => ({ ...req, [field]: value }));
+  }
+
+  updateRegistryInfo(field: string, value: any): void {
+    this.registryInfo.update(info => ({ ...info, [field]: value }));
+  }
+
+  updateRequestField(requestId: number, field: string, value: any): void {
+    this.requests.update(reqs =>
+      reqs.map(r => r.id === requestId ? { ...r, [field]: value } : r)
+    );
+  }
+}

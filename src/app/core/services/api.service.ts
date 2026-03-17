@@ -71,9 +71,10 @@ export class ApiService {
     createControl(data: { domain_id: number; code: string; name: string; statement?: string; expected_evidence?: string; criticality?: string; order?: number }): Observable<Control> { return this.http.post<Control>(`${this.base}/admin/controls`, data); }
     updateControl(controlId: number, data: Partial<Control>): Observable<Control> { return this.http.put<Control>(`${this.base}/admin/controls/${controlId}`, data); }
     deleteControl(controlId: number): Observable<void> { return this.http.delete<void>(`${this.base}/admin/controls/${controlId}`); }
+    updateControlOrder(controlId: number, order: number): Observable<Control> { return this.http.put<Control>(`${this.base}/admin/controls/${controlId}/order`, { order }); }
 
     // Domain CRUD (for inline editing in evaluation)
-    updateDomain(domainId: number, data: { name?: string; description?: string }): Observable<ControlDomain> { return this.http.put<ControlDomain>(`${this.base}/admin/domains/${domainId}`, data); }
+    updateDomain(domainId: number, data: { name?: string; code?: string; description?: string }): Observable<ControlDomain> { return this.http.put<ControlDomain>(`${this.base}/admin/domains/${domainId}`, data); }
     updateDomainOrder(domainId: number, order: number): Observable<ControlDomain> { return this.http.put<ControlDomain>(`${this.base}/admin/domains/${domainId}/order`, { order }); }
 
     // Users (for assignment dropdowns)

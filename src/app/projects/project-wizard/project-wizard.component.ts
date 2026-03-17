@@ -138,7 +138,8 @@ import {
               <div class="domain-header" (click)="!editingDomain() && toggleDomain(domain.id)">
                 @if (editingDomain() === domain.id) {
                   <div style="display:flex;gap:0.5rem;flex:1;align-items:center">
-                    <span style="font-weight:600;color:#64748b">{{ domain.code }} —</span>
+                    <input class="vd-input" style="width:80px;text-align:center;font-weight:600" [(ngModel)]="domain.code" placeholder="Código">
+                    <span style="color:#64748b">—</span>
                     <input class="vd-input" style="flex:1" [(ngModel)]="domain.name" placeholder="Nombre del dominio">
                     <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="saveDomain(domain); $event.stopPropagation()">Guardar</button>
                     <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="cancelEditingDomain(); $event.stopPropagation()">Cancelar</button>
@@ -149,7 +150,9 @@ import {
                     <h3>{{ domain.code }} — {{ domain.name }}</h3>
                   </div>
                   <div style="display:flex;gap:0.5rem;align-items:center">
-                    <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="startEditingDomain(domain.id); $event.stopPropagation()" title="Editar nombre">✏️</button>
+                    @if (!isReadOnly()) {
+                      <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="startEditingDomain(domain.id); $event.stopPropagation()" title="Editar">✏️</button>
+                    }
                     <span class="toggle">{{ expandedDomains.has(domain.id) ? '▼' : '►' }}</span>
                   </div>
                 }
@@ -158,13 +161,28 @@ import {
                 <table class="vd-table">
                   <thead><tr><th style="width:100px">Código</th><th>Control</th><th style="width:180px">Madurez</th><th style="width:200px">Hallazgo</th><th style="width:80px">Acciones</th></tr></thead>
                   <tbody>
-                    @for (control of domain.controls; track control.id) {
-                      <tr>
-                        <td><strong>{{ control.code }}</strong></td>
+                    @for (control of domain.controls; track control.id; let controlIndex = $index) {
+                      <tr
+                           [class.dragging]="draggingControl() === control.id"
+                           [class.drag-over]="dragOverControl() === control.id"
+                           draggable="true"
+                           (dragstart)="onControlDragStart($event, control.id)"
+                           (dragover)="onControlDragOver($event, control.id)"
+                           (drop)="onControlDrop($event, domain.id, controlIndex)"
+                           (dragend)="onControlDragEnd($event)">
+                        <td>
+                          <div style="display:flex;align-items:center;gap:0.5rem">
+                            <span class="drag-handle" title="Arrastrar para reordenar">⋮⋮</span>
+                            <strong>{{ control.code }}</strong>
+                          </div>
+                        </td>
                         <td>
                           @if (editingControl() === control.id) {
                             <div style="display:flex;flex-direction:column;gap:0.5rem">
-                              <input class="vd-input" [(ngModel)]="control.name" placeholder="Nombre del control">
+                              <div style="display:flex;gap:0.5rem">
+                                <input class="vd-input" style="width:120px" [(ngModel)]="control.code" placeholder="Código">
+                                <input class="vd-input" style="flex:1" [(ngModel)]="control.name" placeholder="Nombre del control">
+                              </div>
                               <textarea class="vd-input" [(ngModel)]="control.statement" placeholder="Descripción" rows="2"></textarea>
                               <select class="vd-select" [(ngModel)]="control.criticality">
                                 <option value="alto">Alto</option>
@@ -185,10 +203,10 @@ import {
                             </div>
                           }
                         </td>
-                        <td><select class="vd-select" [ngModel]="getMaturity(control.id)" (ngModelChange)="setMaturity(control.id, $event)"><option [ngValue]="0">Sin evaluar</option><option [ngValue]="1">1 - Inexistente: No tiene control</option><option [ngValue]="2">2 - Inicial: Solo tiene control</option><option [ngValue]="3">3 - Definido: Tiene control y seguimiento</option><option [ngValue]="4">4 - Gestionado: Tiene control, seguimiento e indicador</option><option [ngValue]="5">5 - Optimizado: Tiene control, seguimiento, indicador y mejoras</option></select></td>
-                        <td><input class="vd-input" placeholder="Hallazgo..." [ngModel]="getFinding(control.id)" (ngModelChange)="setFinding(control.id, $event)"></td>
+                        <td><select class="vd-select" [ngModel]="getMaturity(control.id)" (ngModelChange)="setMaturity(control.id, $event)" [disabled]="isReadOnly()"><option [ngValue]="0">Sin evaluar</option><option [ngValue]="1">1 - Inexistente: No tiene control</option><option [ngValue]="2">2 - Inicial: Solo tiene control</option><option [ngValue]="3">3 - Definido: Tiene control y seguimiento</option><option [ngValue]="4">4 - Gestionado: Tiene control, seguimiento e indicador</option><option [ngValue]="5">5 - Optimizado: Tiene control, seguimiento, indicador y mejoras</option></select></td>
+                        <td><input class="vd-input" placeholder="Hallazgo..." [ngModel]="getFinding(control.id)" (ngModelChange)="setFinding(control.id, $event)" [disabled]="isReadOnly()"></td>
                         <td>
-                          @if (editingControl() !== control.id) {
+                          @if (editingControl() !== control.id && !isReadOnly()) {
                             <div style="display:flex;gap:0.25rem">
                               <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="startEditingControl(control.id)" title="Editar">✏️</button>
                               <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="deleteControl(control.id)" title="Eliminar">🗑️</button>
@@ -220,7 +238,9 @@ import {
                     } @else {
                       <tr>
                         <td colspan="5" style="text-align:center;padding:1rem">
-                          <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="startAddingControl(domain.id)">+ Agregar Control</button>
+                          @if (!isReadOnly()) {
+                            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="startAddingControl(domain.id)">+ Agregar Control</button>
+                          }
                         </td>
                       </tr>
                     }
@@ -229,7 +249,7 @@ import {
               }
             </div>
           }
-          <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(1)">← Anterior</button><button class="vd-btn vd-btn-primary" (click)="saveEvaluation()" [disabled]="saving()">{{ saving() ? 'Guardando...' : 'Guardar y Ver Resultados →' }}</button></div>
+          <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(1)">← Anterior</button>@if (!isReadOnly()) {<button class="vd-btn vd-btn-primary" (click)="saveEvaluation()" [disabled]="saving()">{{ saving() ? 'Guardando...' : 'Guardar y Ver Resultados →' }}</button>}</div>
         </div>
 
         <!-- Sidebar: Evaluation History -->
@@ -238,7 +258,9 @@ import {
             @if (!sidebarCollapsed()) {
               <h3>📚 Historial</h3>
               <div class="sidebar-actions">
-                <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="showSnapshotDialog.set(true)">💾 Guardar</button>
+                @if (!isReadOnly()) {
+                  <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="showSnapshotDialog.set(true)">💾 Guardar</button>
+                }
                 <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="sidebarCollapsed.set(true)" title="Colapsar">◀</button>
               </div>
             } @else {
@@ -261,8 +283,10 @@ import {
                     <div class="snapshot-notes">{{ snapshot.notes }}</div>
                   }
                   <div class="snapshot-actions">
-                    <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="restoreSnapshot(snapshot.id); $event.stopPropagation()">↩️ Restaurar</button>
-                    <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="deleteSnapshot(snapshot.id); $event.stopPropagation()">🗑️</button>
+                    @if (!isReadOnly()) {
+                      <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="restoreSnapshot(snapshot.id); $event.stopPropagation()">↩️ Restaurar</button>
+                      <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="deleteSnapshot(snapshot.id); $event.stopPropagation()">🗑️</button>
+                    }
                   </div>
                 </div>
               }
@@ -375,8 +399,15 @@ import {
         @if (actionItems().length === 0) { <p style="color:#64748b;text-align:center;padding:2rem;">No hay acciones generadas. Vuelve al paso anterior y genera las brechas primero.</p> }
 
         <!-- Group by Domain -->
-        @for (domain of actionItemDomains(); track domain) {
-          <div class="action-domain-section">
+        @for (domain of actionItemDomains(); track domain; let i = $index) {
+          <div class="action-domain-section"
+               [class.dragging]="draggingActionDomain() === domain"
+               [class.drag-over]="dragOverActionDomain() === domain"
+               draggable="true"
+               (dragstart)="onActionDomainDragStart($event, domain)"
+               (dragover)="onActionDomainDragOver($event, domain)"
+               (drop)="onActionDomainDrop($event, i)"
+               (dragend)="onActionDomainDragEnd($event)">
             <div class="action-domain-header" (click)="toggleActionDomain(domain)">
                         <!-- Editable Domain Title -->
                         @if (editingActionDomain() === domain) {
@@ -391,6 +422,7 @@ import {
                           </div>
                         } @else {
                           <div style="display:flex;align-items:center;gap:0.5rem;flex:1" (click)="startEditingActionDomain(domain)" style="cursor:pointer;" title="Click para editar nombre del dominio">
+                            <span class="drag-handle" title="Arrastrar para reordenar dominios">⋮⋮</span>
                             <span class="toggle">{{ expandedActionDomains.has(domain) ? '▼' : '▶' }}</span>
                             <strong>{{ getDomainDisplayName(domain) }}</strong>
                             <span class="vd-badge vd-badge-sm">{{ (actionItemsByDomain().get(domain) || []).length }} items</span>
@@ -588,6 +620,8 @@ import {
     .domain-card { margin-bottom: 0.75rem; padding: 0; transition: all 0.2s; }
     .domain-card.dragging { opacity: 0.5; transform: scale(0.98); }
     .domain-card.drag-over { border: 2px dashed #5687f3; background: rgba(86,135,243,0.05); }
+    .vd-table tr.dragging { opacity: 0.5; background: rgba(86,135,243,0.05); }
+    .vd-table tr.drag-over { border: 2px dashed #5687f3; background: rgba(86,135,243,0.08); }
     .domain-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; cursor: pointer; border-radius: 16px; }
     .domain-header:hover { background: #f8fafc; }
     .domain-header h3 { margin: 0; font-size: 0.9375rem; }
@@ -638,7 +672,9 @@ import {
     .action-item { padding: 1rem !important; border: 1px solid #e2e8f0; transition: all 0.2s; }
     .action-item.dragging { opacity: 0.5; transform: scale(0.98); }
     .action-item.drag-over { border: 2px dashed #5687f3; background: rgba(86,135,243,0.05); }
-    .action-domain-section { margin-bottom: 1rem; }
+    .action-domain-section { margin-bottom: 1rem; transition: all 0.2s; }
+    .action-domain-section.dragging { opacity: 0.5; transform: scale(0.98); }
+    .action-domain-section.drag-over { border: 2px dashed #5687f3; background: rgba(86,135,243,0.05); border-radius: 8px; }
     .action-domain-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; margin-bottom: 0.5rem; font-size: 0.9375rem; }
     .action-domain-header:hover { background: #f1f5f9; border-color: #cbd5e1; }
     .action-items-list { padding-left: 0.5rem; }
@@ -792,6 +828,10 @@ export class ProjectWizardComponent implements OnInit {
   addingControlToDomain = signal<number | null>(null);
   editingDomain = signal<number | null>(null);
 
+  // Control drag-and-drop signals
+  draggingControl = signal<number | null>(null);
+  dragOverControl = signal<number | null>(null);
+
   // Domain drag-and-drop signals
   draggingDomain = signal<number | null>(null);
   dragOverDomain = signal<number | null>(null);
@@ -806,10 +846,17 @@ export class ProjectWizardComponent implements OnInit {
   // Action Item drag-and-drop signals
   draggingActionItem = signal<number | null>(null);
   dragOverActionItem = signal<number | null>(null);
+
+  // Action Domain drag-and-drop signals
+  draggingActionDomain = signal<string | null>(null);
+  dragOverActionDomain = signal<string | null>(null);
   expandedActionDomains = new Set<string>();
 
   manualLargeScale: boolean | null = null;
   deliverableTab: 'pending' | 'generated' = 'pending';
+
+  // Role-based access control - Junior users are read-only
+  isReadOnly = computed(() => this.auth.userRole() === 'junior');
 
   // Computed: Group action items by domain
   actionItemsByDomain = computed(() => {
@@ -1113,6 +1160,7 @@ export class ProjectWizardComponent implements OnInit {
   cancelEditingControl(): void { this.editingControl.set(null); }
   saveControl(control: Control): void {
     this.api.updateControl(control.id, {
+      code: control.code,
       name: control.name,
       statement: control.statement,
       expected_evidence: control.expected_evidence,
@@ -1359,6 +1407,71 @@ export class ProjectWizardComponent implements OnInit {
     this.dragOverActionItem.set(null);
   }
 
+  // Action Domain drag-and-drop methods
+  onActionDomainDragStart(event: DragEvent, domain: string): void {
+    this.draggingActionDomain.set(domain);
+    event.dataTransfer?.setData('text/plain', domain);
+    event.dataTransfer!.effectAllowed = 'move';
+  }
+
+  onActionDomainDragOver(event: DragEvent, domain: string): void {
+    event.preventDefault();
+    if (this.draggingActionDomain() !== domain) {
+      this.dragOverActionDomain.set(domain);
+    }
+  }
+
+  onActionDomainDrop(event: DragEvent, targetIndex: number): void {
+    event.preventDefault();
+    const draggedDomain = this.draggingActionDomain();
+    if (!draggedDomain) return;
+
+    const currentDomains = [...this.actionItemDomains()];
+    const draggedIndex = currentDomains.findIndex(d => d === draggedDomain);
+
+    if (draggedIndex === -1 || draggedIndex === targetIndex) {
+      this.draggingActionDomain.set(null);
+      this.dragOverActionDomain.set(null);
+      return;
+    }
+
+    // Reordenar en la lista local
+    const [removed] = currentDomains.splice(draggedIndex, 1);
+    currentDomains.splice(targetIndex, 0, removed);
+
+    // Actualizar el orden de los action items para reflejar el nuevo orden de dominios
+    const allItems = [...this.actionItems()];
+    let orderCounter = 0;
+
+    currentDomains.forEach(domainCode => {
+      const domainItems = allItems.filter(item => item.domain === domainCode);
+      domainItems.forEach(item => {
+        item.order = ++orderCounter;
+      });
+    });
+
+    // Actualizar el signal con los items reordenados
+    this.actionItems.set(allItems);
+
+    // Guardar el nuevo orden en el backend
+    const orders = allItems.map(item => ({
+      id: item.id,
+      order: item.order ?? 0
+    }));
+
+    this.api.reorderActionItems(this.projectId, orders).subscribe({
+      error: () => console.error('Error al reordenar dominios del plan de acción')
+    });
+
+    this.draggingActionDomain.set(null);
+    this.dragOverActionDomain.set(null);
+  }
+
+  onActionDomainDragEnd(event: DragEvent): void {
+    this.draggingActionDomain.set(null);
+    this.dragOverActionDomain.set(null);
+  }
+
   generateDeliverablesList(): void {
     this.generatingDeliverables.set(true);
     this.api.generateDeliverables(this.projectId).subscribe({
@@ -1516,20 +1629,86 @@ export class ProjectWizardComponent implements OnInit {
       alert('El nombre del dominio no puede estar vacío');
       return;
     }
-    this.api.updateDomain(domain.id, { name: domain.name }).subscribe({
+    if (!domain.code.trim()) {
+      alert('El código del dominio no puede estar vacío');
+      return;
+    }
+    this.api.updateDomain(domain.id, { name: domain.name, code: domain.code }).subscribe({
       next: () => {
         this.editingDomain.set(null);
         // Actualizar el dominio en la lista local
         const updatedDomains = this.domains().map(d =>
-          d.id === domain.id ? { ...d, name: domain.name } : d
+          d.id === domain.id ? { ...d, name: domain.name, code: domain.code } : d
         );
         this.domains.set(updatedDomains);
       },
       error: () => {
-        alert('Error al guardar el nombre del dominio');
+        alert('Error al guardar el dominio');
         this.loadEvaluation();
       }
     });
+  }
+
+  // Control drag-and-drop methods
+  onControlDragStart(event: DragEvent, controlId: number): void {
+    this.draggingControl.set(controlId);
+    event.dataTransfer?.setData('text/plain', controlId.toString());
+    event.dataTransfer!.effectAllowed = 'move';
+  }
+
+  onControlDragOver(event: DragEvent, controlId: number): void {
+    event.preventDefault();
+    if (this.draggingControl() !== controlId) {
+      this.dragOverControl.set(controlId);
+    }
+  }
+
+  onControlDrop(event: DragEvent, domainId: number, targetIndex: number): void {
+    event.preventDefault();
+    const draggedId = this.draggingControl();
+    if (!draggedId) return;
+
+    const currentDomains = [...this.domains()];
+    const domain = currentDomains.find(d => d.id === domainId);
+    if (!domain) {
+      this.draggingControl.set(null);
+      this.dragOverControl.set(null);
+      return;
+    }
+
+    const controls = [...domain.controls];
+    const draggedIndex = controls.findIndex(c => c.id === draggedId);
+
+    if (draggedIndex === -1 || draggedIndex === targetIndex) {
+      this.draggingControl.set(null);
+      this.dragOverControl.set(null);
+      return;
+    }
+
+    // Reordenar controles en la lista local
+    const [removed] = controls.splice(draggedIndex, 1);
+    controls.splice(targetIndex, 0, removed);
+
+    // Actualizar el domain con los controles reordenados
+    const updatedDomains = currentDomains.map(d =>
+      d.id === domainId ? { ...d, controls } : d
+    );
+    this.domains.set(updatedDomains);
+
+    // Actualizar el orden en el backend
+    controls.forEach((control, index) => {
+      this.api.updateControlOrder(control.id, index).subscribe({
+        error: () => console.error(`Error al actualizar orden del control ${control.id}`)
+      });
+    });
+
+    this.draggingControl.set(null);
+    this.dragOverControl.set(null);
+  }
+
+  onControlDragEnd(event: DragEvent): void {
+    this.draggingControl.set(null);
+    this.dragOverControl.set(null);
   }
 
   // Domain drag-and-drop methods
