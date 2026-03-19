@@ -1427,9 +1427,16 @@ export class ProjectWizardComponent implements OnInit {
     const newName = title.includes('—') ? title.split('—')[1].trim() : title;
 
     // Find the domain in the list to get the id
-    const domainObj = this.domains().find(d => d.code === domain);
+    // Try by code first, then by name matching
+    let domainObj = this.domains().find(d => d.code === domain);
     if (!domainObj) {
-      alert('No se encontró el dominio para actualizar');
+      // Try to find by name (in case domain was stored as full name)
+      domainObj = this.domains().find(d => domain.includes(d.code) || d.name === domain);
+    }
+
+    if (!domainObj) {
+      console.error('Domain not found. Available domains:', this.domains());
+      alert('No se encontró el dominio. Por favor recarga la página o vuelve al paso 2 y regresa.');
       return;
     }
 
