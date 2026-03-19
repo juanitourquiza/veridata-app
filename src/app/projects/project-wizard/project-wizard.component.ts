@@ -345,7 +345,7 @@ import {
           <!-- Gaps grouped by domain -->
           @for (domain of gapDomains(); track domain) {
             <div class="gap-domain-section">
-              <h4 class="gap-domain-title">{{ domain }}</h4>
+              <h4 class="gap-domain-title">{{ getGapDomainDisplayName(domain) }}</h4>
               @for (g of gapsByDomain(domain); track g.id) {
                 <div class="gap-item" [class]="'gap-item-' + g.impact">
                   <div class="gap-item-header">
@@ -1110,6 +1110,22 @@ export class ProjectWizardComponent implements OnInit {
   gapCountByImpact(impact: string): number { return this.gaps().filter(g => g.impact === impact).length; }
   gapDomains(): string[] { return [...new Set(this.gaps().map(g => g.domain))]; }
   gapsByDomain(domain: string): Gap[] { return this.gaps().filter(g => g.domain === domain); }
+
+  // Get updated domain name for gaps (matches stored domain name to current domain list)
+  getGapDomainDisplayName(storedDomainName: string): string {
+    // Try to find a domain whose code matches the stored name (for domains stored as code)
+    const domainByCode = this.domains().find(d => d.code === storedDomainName);
+    if (domainByCode) {
+      return `${domainByCode.code} — ${domainByCode.name}`;
+    }
+    // Try to find by name match (for domains stored as full name)
+    const domainByName = this.domains().find(d => storedDomainName.includes(d.code) || d.name === storedDomainName);
+    if (domainByName) {
+      return `${domainByName.code} — ${domainByName.name}`;
+    }
+    // Fallback to stored name
+    return storedDomainName;
+  }
 
   deliverablesByStatus(status: string): Deliverable[] { return this.deliverables().filter(d => d.status === status); }
   currentDeliverables(): Deliverable[] {
