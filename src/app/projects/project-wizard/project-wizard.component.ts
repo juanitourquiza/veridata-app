@@ -573,10 +573,114 @@ import {
           </div>
         </div>
       </div>
-      <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(4)">← Anterior</button><button class="vd-btn vd-btn-primary" (click)="finishProject()">Finalizar ✓</button></div>
+      <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(4)">← Anterior</button><button class="vd-btn vd-btn-primary" (click)="goToStep(6)">Siguiente →</button></div>
     }
 
-    @if (sharedUrl()) { <div class="share-toast vd-card">🔗 Enlace compartido: <a [href]="sharedUrl()" target="_blank">{{ sharedUrl() }}</a></div> }
+    <!-- Step 6: Repository -->
+    @if (currentStep() === 6) {
+      <div class="vd-card">
+        <h2>📁 Repositorio de Entregables</h2>
+        <p style="color:#64748b;margin-bottom:1rem;">Espacio centralizado para la trazabilidad y gestión de todos los entregables del proyecto.</p>
+
+        <div class="repo-grid">
+          <!-- Resumen del Proyecto -->
+          <div class="repo-section">
+            <h3>📊 Resumen del Proyecto</h3>
+            <div class="repo-stats">
+              <div class="repo-stat">
+                <span class="repo-stat-value">{{ deliverables().length }}</span>
+                <span class="repo-stat-label">Total Entregables</span>
+              </div>
+              <div class="repo-stat">
+                <span class="repo-stat-value">{{ deliverablesByStatus('generated').length + deliverablesByStatus('uploaded').length }}</span>
+                <span class="repo-stat-label">Completados</span>
+              </div>
+              <div class="repo-stat">
+                <span class="repo-stat-value">{{ deliverablesByStatus('pending').length }}</span>
+                <span class="repo-stat-label">Pendientes</span>
+              </div>
+              <div class="repo-stat">
+                <span class="repo-stat-value">{{ evaluationSnapshots().length }}</span>
+                <span class="repo-stat-label">Evaluaciones Guardadas</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lista de Entregables -->
+          <div class="repo-section">
+            <h3>📑 Todos los Entregables</h3>
+            <div class="repo-deliverables-list">
+              @for (deliverable of deliverables(); track deliverable.id) {
+                <div class="repo-deliverable-item" [class.completed]="deliverable.status === 'generated' || deliverable.status === 'uploaded'">
+                  <div class="repo-deliverable-icon">
+                    @switch (deliverable.status) {
+                      @case ('pending') { ⏳ }
+                      @case ('generated') { ✅ }
+                      @case ('uploaded') { 📤 }
+                    }
+                  </div>
+                  <div class="repo-deliverable-info">
+                    <strong>{{ deliverable.title }}</strong>
+                    <span class="repo-deliverable-type">{{ deliverable.domain_name }}</span>
+                  </div>
+                  <div class="repo-deliverable-status">
+                    <span class="vd-badge" [class.vd-badge-baja]="deliverable.status === 'generated' || deliverable.status === 'uploaded'" [class.vd-badge-media]="deliverable.status === 'pending'">
+                      {{ deliverable.status === 'pending' ? 'Pendiente' : deliverable.status === 'generated' ? 'Generado' : 'Subido' }}
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Historial de Evaluaciones -->
+          <div class="repo-section">
+            <h3>� Historial de Evaluaciones</h3>
+            <div class="repo-snapshots-list">
+              @for (snapshot of evaluationSnapshots(); track snapshot.id) {
+                <div class="repo-snapshot-item">
+                  <div class="repo-snapshot-info">
+                    <strong>{{ snapshot.name }}</strong>
+                    <span class="repo-snapshot-date">{{ snapshot.snapshot_date | date:'dd/MM/yyyy' }}</span>
+                  </div>
+                  <div class="repo-snapshot-actions">
+                    <span class="vd-badge vd-badge-baja">{{ snapshot.global_maturity | number:'1.1-1' }}/5</span>
+                    <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="viewSnapshotReport(snapshot.id)">📄 Ver informe</button>
+                  </div>
+                </div>
+              }
+              @if (evaluationSnapshots().length === 0) {
+                <p style="color:#64748b;text-align:center;padding:1rem;">No hay evaluaciones guardadas en el historial.</p>
+              }
+            </div>
+          </div>
+
+          <!-- Métricas de Trazabilidad -->
+          <div class="repo-section">
+            <h3>📈 Trazabilidad</h3>
+            <div class="repo-traceability">
+              <div class="repo-trace-item">
+                <span class="repo-trace-label">Madurez Global Actual</span>
+                <span class="repo-trace-value">{{ globalMaturity() | number:'1.1-1' }}/5</span>
+              </div>
+              <div class="repo-trace-item">
+                <span class="repo-trace-label">Controles Evaluados</span>
+                <span class="repo-trace-value">{{ evaluatedCount() }}/{{ totalControls() }}</span>
+              </div>
+              <div class="repo-trace-item">
+                <span class="repo-trace-label">Brechas Identificadas</span>
+                <span class="repo-trace-value">{{ gaps().length }}</span>
+              </div>
+              <div class="repo-trace-item">
+                <span class="repo-trace-label">Acciones del Plan</span>
+                <span class="repo-trace-value">{{ actionItems().length }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(5)">← Anterior</button><button class="vd-btn vd-btn-primary" (click)="finishProject()">Finalizar ✓</button></div>
+    }
 
     <!-- Save Snapshot Dialog -->
     @if (showSnapshotDialog()) {
@@ -733,6 +837,32 @@ import {
     .vd-badge-alta { background: rgba(239,68,68,0.1); color: #dc2626; }
     .vd-badge-critica { background: rgba(127,29,29,0.1); color: #991b1b; }
 
+    /* Repository - Step 6 */
+    .repo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+    .repo-section { background: #f8fafc; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; }
+    .repo-section h3 { margin: 0 0 1rem; font-size: 1rem; color: #1e293b; }
+    .repo-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .repo-stat { text-align: center; padding: 1rem; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .repo-stat-value { font-size: 1.5rem; font-weight: 700; color: #5687f3; }
+    .repo-stat-label { font-size: 0.75rem; color: #64748b; margin-top: 0.25rem; }
+    .repo-deliverables-list { max-height: 300px; overflow-y: auto; }
+    .repo-deliverable-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; background: white; border: 1px solid #e2e8f0; }
+    .repo-deliverable-item.completed { border-left: 4px solid #22c55e; }
+    .repo-deliverable-icon { font-size: 1.25rem; }
+    .repo-deliverable-info { flex: 1; }
+    .repo-deliverable-info strong { display: block; font-size: 0.875rem; color: #1e293b; }
+    .repo-deliverable-type { font-size: 0.75rem; color: #64748b; }
+    .repo-deliverable-status { margin-left: auto; }
+    .repo-snapshots-list { max-height: 250px; overflow-y: auto; }
+    .repo-snapshot-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: white; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid #e2e8f0; }
+    .repo-snapshot-info strong { display: block; font-size: 0.875rem; color: #1e293b; }
+    .repo-snapshot-date { font-size: 0.75rem; color: #64748b; }
+    .repo-snapshot-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .repo-traceability { display: flex; flex-direction: column; gap: 0.75rem; }
+    .repo-trace-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .repo-trace-label { font-size: 0.875rem; color: #64748b; }
+    .repo-trace-value { font-weight: 600; color: #1e293b; }
+
     @media (max-width: 768px) {
       .form-grid, .results-grid, .gap-summary { grid-template-columns: 1fr; }
       .ai-controls { grid-template-columns: 1fr 1fr; }
@@ -750,7 +880,7 @@ import {
   `],
 })
 export class ProjectWizardComponent implements OnInit {
-  steps = [{ num: 1, label: 'Información' }, { num: 2, label: 'Evaluación' }, { num: 3, label: 'Resultados' }, { num: 4, label: 'Plan de Acción' }, { num: 5, label: 'Entregables' }];
+  steps = [{ num: 1, label: 'Información' }, { num: 2, label: 'Evaluación' }, { num: 3, label: 'Resultados' }, { num: 4, label: 'Plan de Acción' }, { num: 5, label: 'Entregables' }, { num: 6, label: 'Repositorio' }];
   currentStep = signal(1);
   isEdit = false;
   projectId = 0;
@@ -822,6 +952,11 @@ export class ProjectWizardComponent implements OnInit {
   showSnapshotDialog = signal(false);
   savingSnapshot = signal(false);
   sidebarCollapsed = signal(false);
+
+  // Snapshot Report Modal signals
+  showSnapshotReportModal = signal(false);
+  viewingSnapshot = signal<{ id: number; name: string; snapshot_date: string; global_maturity: number; evaluations_data: Evaluation[]; gaps_data?: Gap[]; notes?: string } | null>(null);
+  loadingSnapshotReport = signal(false);
 
   // Control editing signals
   editingControl = signal<number | null>(null);
@@ -1611,6 +1746,28 @@ export class ProjectWizardComponent implements OnInit {
       },
       error: () => alert('Error al eliminar la evaluación.')
     });
+  }
+
+  // Load and view snapshot report
+  viewSnapshotReport(snapshotId: number): void {
+    this.loadingSnapshotReport.set(true);
+    this.showSnapshotReportModal.set(true);
+
+    this.api.getEvaluationSnapshot(this.projectId, snapshotId).subscribe({
+      next: (res: { snapshot: { id: number; name: string; snapshot_date: string; global_maturity: number; evaluations_data: Evaluation[]; gaps_data?: Gap[]; notes?: string } }) => {
+        this.viewingSnapshot.set(res.snapshot);
+        this.loadingSnapshotReport.set(false);
+      },
+      error: () => {
+        this.loadingSnapshotReport.set(false);
+        alert('Error al cargar el informe del snapshot.');
+      }
+    });
+  }
+
+  closeSnapshotReportModal(): void {
+    this.showSnapshotReportModal.set(false);
+    this.viewingSnapshot.set(null);
   }
 
   // Domain editing methods
