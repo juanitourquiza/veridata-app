@@ -15,6 +15,7 @@ import { environment } from '../core/environment';
         <div class="sidebar-brand"><svg viewBox="0 0 40 40" fill="none" width="32" height="32"><path d="M20 4L6 12v16l14 8 14-8V12L20 4z" fill="#5687f3" opacity="0.2"/><path d="M20 4L6 12v16l14 8 14-8V12L20 4z" stroke="#5687f3" stroke-width="2" fill="none"/><path d="M14 20l4 4 8-8" stroke="#5687f3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="brand-info"><span class="brand-text">Veridata</span><span class="brand-version">v{{ version }}</span></div></div>
         <nav class="sidebar-nav">
           <a routerLink="/projects" routerLinkActive="active" class="nav-item"><span class="nav-icon">📁</span><span>Proyectos</span></a>
+          <a routerLink="/subscription" routerLinkActive="active" class="nav-item"><span class="nav-icon">💳</span><span>Mi Suscripción</span></a>
 
           <!-- Herramientas y Registros PDP - Expandable Menu -->
           <div class="nav-group">
