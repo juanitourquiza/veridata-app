@@ -14,6 +14,9 @@ export const routes: Routes = [
             { path: 'projects/new', loadComponent: () => import('./projects/project-wizard/project-wizard.component').then(m => m.ProjectWizardComponent) },
             { path: 'projects/:id', loadComponent: () => import('./projects/project-wizard/project-wizard.component').then(m => m.ProjectWizardComponent) },
 
+            // Suscripción
+            { path: 'subscription', loadComponent: () => import('./subscription/subscription.component').then(m => m.SubscriptionComponent) },
+
             // Herramientas y Registros PDP
             { path: 'tools/rat', loadComponent: () => import('./tools/rat/rat.component').then(m => m.RatComponent) },
             { path: 'tools/impact-assessment', loadComponent: () => import('./tools/impact-assessment/impact-assessment.component').then(m => m.ImpactAssessmentComponent) },

@@ -78,6 +78,12 @@ export class PdpToolsService {
     return this.http.put(`${this.apiUrl}/tools/officer-qualifications/${id}`, data);
   }
 
+  generateQualificationReport(id: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/tools/officer-qualifications/${id}/report`, {
+      responseType: 'blob'
+    });
+  }
+
   // ========== Transfer Qualifications ==========
   getTransferQualifications(params?: any): Observable<any> {
     return this.http.get(`${this.apiUrl}/tools/transfer-qualifications`, { params });
@@ -93,6 +99,12 @@ export class PdpToolsService {
 
   updateTransferQualification(id: number, data: any): Observable<any> {
     return this.http.put(`${this.apiUrl}/tools/transfer-qualifications/${id}`, data);
+  }
+
+  generateTransferReport(id: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/tools/transfer-qualifications/${id}/report`, {
+      responseType: 'blob'
+    });
   }
 
   // ========== Rights Requests ==========

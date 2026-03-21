@@ -81,10 +81,12 @@ import { PdpToolsService } from '../pdp-tools.service';
                 <option value="acceso">ACCESO (Art. 27)</option>
                 <option value="rectificacion">RECTIFICACIÓN (Art. 28)</option>
                 <option value="supresion">SUPRESIÓN / DERECHO AL OLVIDO (Art. 29)</option>
+                <option value="eliminacion">ELIMINACIÓN (Art. 61)</option>
                 <option value="oposicion">OPOSICIÓN (Art. 30)</option>
                 <option value="portabilidad">PORTABILIDAD (Art. 31)</option>
                 <option value="informacion">INFORMACIÓN (Art. 26)</option>
                 <option value="decision_automatizada">NO SER OBJETO DE DECISIONES AUTOMATIZADAS (Art. 32)</option>
+                <option value="revocatoria">REVOCATORIA DEL CONSENTIMIENTO (Art. 18)</option>
               </select>
             </div>
             <div class="form-group">
@@ -244,6 +246,8 @@ import { PdpToolsService } from '../pdp-tools.service';
     .right-portabilidad { background: rgba(139,92,246,0.1); color: #8b5cf6; }
     .right-informacion { background: rgba(100,116,139,0.1); color: #64748b; }
     .right-decision_automatizada { background: rgba(236,72,153,0.1); color: #ec4899; }
+    .right-eliminacion { background: rgba(220,38,38,0.1); color: #b91c1c; }
+    .right-revocatoria { background: rgba(168,85,247,0.1); color: #7c3aed; }
     .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; }
     .stat-item { text-align: center; padding: 1rem; background: #f8fafc; border-radius: 8px; }
     .stat-number { display: block; font-size: 1.5rem; font-weight: 700; color: #5687f3; }
@@ -293,10 +297,12 @@ export class RightsExerciseComponent implements OnInit {
       'acceso': 'ACCESO',
       'rectificacion': 'RECTIF.',
       'supresion': 'SUPRESIÓN',
+      'eliminacion': 'ELIMINACIÓN',
       'oposicion': 'OPOSICIÓN',
       'portabilidad': 'PORTAB.',
       'informacion': 'INFO.',
-      'decision_automatizada': 'NO AUTO.'
+      'decision_automatizada': 'NO AUTO.',
+      'revocatoria': 'REVOCATORIA'
     };
     return labels[rightType] || rightType;
   }
@@ -332,7 +338,10 @@ export class RightsExerciseComponent implements OnInit {
         this.loadRequests();
         this.newRequest.set({ received_date: '', channel: '', requester_type: '', requester_name: '', right_type: '', responsible_area: '', requires_clarification: false, description: '' });
       },
-      error: (err: any) => alert('Error al guardar: ' + err.message)
+      error: (err: any) => {
+        const msg = err.error?.message || err.error?.errors ? JSON.stringify(err.error?.errors) : err.message;
+        alert('Error al guardar: ' + msg);
+      }
     });
   }
 

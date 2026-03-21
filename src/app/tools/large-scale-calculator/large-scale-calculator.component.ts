@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PdpToolsService } from '../pdp-tools.service';
 
-// Large Scale Calculator Component - Cálculo de Gran Escala según R52-2026
+// Large Scale Calculator - Cálculo de Gran Escala según Art. 14 LOPDP y R52-2026
+// Corrected scoring logic based on SPDP methodology
 
 @Component({
   selector: 'app-large-scale-calculator',
@@ -26,7 +27,7 @@ import { PdpToolsService } from '../pdp-tools.service';
             <h4>👥 Titulares de Datos (12 meses)</h4>
             <div class="form-group">
               <label class="vd-label">Número estimado de titulares afectados</label>
-              <input type="number" class="vd-input" [(ngModel)]="params().data_subjects" (change)="calculateScale()" min="0">
+              <input type="number" class="vd-input" [ngModel]="params().data_subjects" (ngModelChange)="updateParam('data_subjects', $event)" min="0">
               <small class="input-help">Incluye todos los titulares cuyos datos se tratan en un año</small>
             </div>
             <div class="parameter-score">
@@ -40,7 +41,7 @@ import { PdpToolsService } from '../pdp-tools.service';
             <h4>📦 Volumen de Datos</h4>
             <div class="form-group">
               <label class="vd-label">Tipos de datos por titular</label>
-              <input type="number" class="vd-input" [(ngModel)]="params().data_volume" (change)="calculateScale()" min="0">
+              <input type="number" class="vd-input" [ngModel]="params().data_volume" (ngModelChange)="updateParam('data_volume', $event)" min="0">
               <small class="input-help">Cantidad promedio de categorías diferentes por titular</small>
             </div>
             <div class="parameter-score">
@@ -54,7 +55,7 @@ import { PdpToolsService } from '../pdp-tools.service';
             <h4>🔄 Frecuencia del Tratamiento</h4>
             <div class="form-group">
               <label class="vd-label">Periodicidad del tratamiento</label>
-              <select class="vd-select" [(ngModel)]="params().frequency" (change)="calculateScale()">
+              <select class="vd-select" [ngModel]="params().frequency" (ngModelChange)="updateParam('frequency', $event)">
                 <option value="puntual">Puntual (única vez)</option>
                 <option value="periodica">Periódica (múltiples veces al año)</option>
                 <option value="continua">Continua (permanente/tiempo real)</option>
@@ -71,10 +72,10 @@ import { PdpToolsService } from '../pdp-tools.service';
             <h4>⏱️ Permanencia del Tratamiento</h4>
             <div class="form-group">
               <label class="vd-label">Duración del tratamiento</label>
-              <select class="vd-select" [(ngModel)]="params().duration" (change)="calculateScale()">
-                <option value="ocasional">Ocasional (&lt; 3 meses)</option>
+              <select class="vd-select" [ngModel]="params().duration" (ngModelChange)="updateParam('duration', $event)">
+                <option value="ocasional">Ocasional (< 3 meses)</option>
                 <option value="temporal">Temporal (3-12 meses)</option>
-                <option value="prolongada">Prolongada (&gt; 12 meses)</option>
+                <option value="prolongada">Prolongada (> 12 meses)</option>
               </select>
             </div>
             <div class="parameter-score">
@@ -88,7 +89,7 @@ import { PdpToolsService } from '../pdp-tools.service';
             <h4>🌎 Alcance Geográfico</h4>
             <div class="form-group">
               <label class="vd-label">Cobertura territorial</label>
-              <select class="vd-select" [ngModel]="params().geographic_scope" (ngModelChange)="updateParam('geographic_scope', $event); calculateScale()">
+              <select class="vd-select" [ngModel]="params().geographic_scope" (ngModelChange)="updateParam('geographic_scope', $event)">
                 <option value="local">Local (una ciudad/localidad)</option>
                 <option value="regional">Regional (varias provincias)</option>
                 <option value="nacional">Nacional (todo el país)</option>
@@ -101,24 +102,24 @@ import { PdpToolsService } from '../pdp-tools.service';
             </div>
           </div>
 
-          <!-- Special Categories -->
+          <!-- Special Data Categories -->
           <div class="calc-section">
             <h4>⚠️ Datos Especiales</h4>
             <div class="checkbox-list">
               <label class="checkbox-item">
-                <input type="checkbox" [ngModel]="params().health_data" (ngModelChange)="updateParam('health_data', $event); calculateScale()">
+                <input type="checkbox" [ngModel]="params().health_data" (ngModelChange)="updateParam('health_data', $event)">
                 <span>Datos de salud</span>
               </label>
               <label class="checkbox-item">
-                <input type="checkbox" [ngModel]="params().financial_data" (ngModelChange)="updateParam('financial_data', $event); calculateScale()">
+                <input type="checkbox" [ngModel]="params().financial_data" (ngModelChange)="updateParam('financial_data', $event)">
                 <span>Datos financieros</span>
               </label>
               <label class="checkbox-item">
-                <input type="checkbox" [ngModel]="params().biometric_data" (ngModelChange)="updateParam('biometric_data', $event); calculateScale()">
+                <input type="checkbox" [ngModel]="params().biometric_data" (ngModelChange)="updateParam('biometric_data', $event)">
                 <span>Datos biométricos</span>
               </label>
               <label class="checkbox-item">
-                <input type="checkbox" [ngModel]="params().minors_data" (ngModelChange)="updateParam('minors_data', $event); calculateScale()">
+                <input type="checkbox" [ngModel]="params().minors_data" (ngModelChange)="updateParam('minors_data', $event)">
                 <span>Datos de menores</span>
               </label>
             </div>
@@ -135,15 +136,15 @@ import { PdpToolsService } from '../pdp-tools.service';
           <p class="section-desc">El tratamiento se presume a gran escala si cumple alguno de estos criterios (Art. 14.3 LOPDP):</p>
           <div class="checkbox-list">
             <label class="checkbox-item">
-              <input type="checkbox" [ngModel]="params().direct_profiling" (ngModelChange)="updateParam('direct_profiling', $event); calculateScale()">
+              <input type="checkbox" [ngModel]="params().direct_profiling" (ngModelChange)="updateParam('direct_profiling', $event)">
               <span>Perfilamiento sistemático con efectos significativos</span>
             </label>
             <label class="checkbox-item">
-              <input type="checkbox" [ngModel]="params().direct_surveillance" (ngModelChange)="updateParam('direct_surveillance', $event); calculateScale()">
+              <input type="checkbox" [ngModel]="params().direct_surveillance" (ngModelChange)="updateParam('direct_surveillance', $event)">
               <span>Vigilancia sistemática de áreas públicas</span>
             </label>
             <label class="checkbox-item">
-              <input type="checkbox" [ngModel]="params().direct_sensitive_massive" (ngModelChange)="updateParam('direct_sensitive_massive', $event); calculateScale()">
+              <input type="checkbox" [ngModel]="params().direct_sensitive_massive" (ngModelChange)="updateParam('direct_sensitive_massive', $event)">
               <span>Tratamiento masivo de datos sensibles</span>
             </label>
           </div>
@@ -160,18 +161,24 @@ import { PdpToolsService } from '../pdp-tools.service';
             <p class="result-description">
               {{ isLargeScale()
                 ? 'El tratamiento requiere Evaluación de Impacto en Protección de Datos (EIPD) según Art. 14 LOPDP.'
-                : 'El tratamiento no requiera EIPD obligatoria, pero se recomienda considerar medidas de seguridad proporcionales.' }}
+                : 'El tratamiento no requiere EIPD obligatoria, pero se recomienda considerar medidas de seguridad proporcionales.' }}
             </p>
           </div>
         </div>
 
+        @if (hasDirectQualification()) {
+          <div class="direct-alert">
+            <strong>⚡ Calificación directa aplicada</strong> — El tratamiento se califica automáticamente como gran escala por cumplir criterios del Art. 14.3 LOPDP, independientemente del puntaje.
+          </div>
+        }
+
         <div class="score-breakdown">
           <div class="score-total">
             <span class="total-label">Puntuación Total:</span>
-            <span class="total-value" [class.high]="totalScore() > 50">{{ totalScore() }} / 100</span>
+            <span class="total-value" [class.high]="getTotalScore() >= 50">{{ getTotalScore() }} / 100</span>
           </div>
           <div class="score-bar">
-            <div class="score-fill" [style.width.%]="totalScore()" [class.high]="isLargeScale()"></div>
+            <div class="score-fill" [style.width.%]="getTotalScore()" [class.high]="isLargeScale()"></div>
           </div>
           <div class="threshold-marker">Umbral: 50 puntos</div>
         </div>
@@ -180,7 +187,7 @@ import { PdpToolsService } from '../pdp-tools.service';
           <h4>Desglose del cálculo MTGE:</h4>
           <div class="detail-grid">
             <div class="detail-item">
-              <span class="detail-label">Titulares ({{ params().data_subjects || 0 }}):</span>
+              <span class="detail-label">Titulares ({{ params().data_subjects || 0 | number }}):</span>
               <span class="detail-value">{{ getSubjectScore() }} pts</span>
             </div>
             <div class="detail-item">
@@ -207,12 +214,7 @@ import { PdpToolsService } from '../pdp-tools.service';
         </div>
 
         <div class="result-actions">
-          <button class="vd-btn vd-btn-primary" (click)="generateReport()">📄 Generar informe MTGE</button>
-          @if (isLargeScale()) {
-            <button class="vd-btn vd-btn-secondary" routerLink="/tools/impact-assessment">Ir a Evaluación de Impacto →</button>
-          }
-          <button class="vd-btn vd-btn-secondary" (click)="saveCalculation()">💾 Guardar cálculo</button>
-          <button class="vd-btn vd-btn-secondary" (click)="viewRegulation()">📚 Ver Reglamento R52</button>
+          <button class="vd-btn vd-btn-secondary" (click)="resetParams()">🔄 Reiniciar</button>
         </div>
       </div>
 
@@ -248,7 +250,8 @@ import { PdpToolsService } from '../pdp-tools.service';
     .score-label { font-size: 0.75rem; color: #64748b; }
     .score-value { font-size: 0.875rem; font-weight: 600; color: #5687f3; }
     .checkbox-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .checkbox-item { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.75rem; }
+    .checkbox-item { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.813rem; }
+    .checkbox-item input { accent-color: #5687f3; }
     .direct-qualification { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
     .direct-qualification h4 { margin: 0 0 0.5rem; }
     .result-card { border-left: 4px solid #22c55e; }
@@ -259,6 +262,7 @@ import { PdpToolsService } from '../pdp-tools.service';
     .result-title { display: block; font-size: 1.125rem; margin-bottom: 0.5rem; color: #16a34a; }
     .result-large .result-title { color: #dc2626; }
     .result-description { margin: 0; color: #64748b; font-size: 0.875rem; }
+    .direct-alert { padding: 0.75rem 1rem; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #dc2626; border-radius: 8px; margin-bottom: 1rem; font-size: 0.813rem; }
     .score-breakdown { padding: 1rem; background: #f8fafc; border-radius: 8px; margin-bottom: 1rem; }
     .score-total { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
     .total-label { font-size: 0.875rem; color: #64748b; }
@@ -287,89 +291,154 @@ import { PdpToolsService } from '../pdp-tools.service';
 })
 export class LargeScaleCalculatorComponent {
   params = signal<any>({
-    data_subjects: 0,
-    data_volume: 0,
+    data_subjects: 1000,
+    data_volume: 1000,
     frequency: 'puntual',
-    duration: 'ocasional',
-    geographic_scope: 'local',
-    health_data: false,
-    financial_data: false,
+    duration: 'temporal',
+    geographic_scope: 'regional',
+    health_data: true,
+    financial_data: true,
     biometric_data: false,
     minors_data: false,
     direct_profiling: false,
     direct_surveillance: false,
-    direct_sensitive_massive: false
+    direct_sensitive_massive: false,
   });
-
-  totalScore = signal<number>(0);
 
   private pdpToolsService = inject(PdpToolsService);
 
-  subjectScore = signal<number>(0);
-
+  /**
+   * Titulares scoring (max 25 pts):
+   * The R52-2026 methodology uses logarithmic-like bands.
+   * >= 100,000 titulares → 25 pts (automatic gran escala if sensibles > 5000)
+   * >= 50,000 → 20 pts
+   * >= 10,000 → 15 pts
+   * >= 5,000 → 10 pts
+   * >= 1,000 → 5 pts
+   * >= 500 → 3 pts
+   * < 500 → 1 pt
+   */
   getSubjectScore(): number {
-    const subjects = this.params().data_subjects || 0;
-    if (subjects >= 100000) return 20;
-    if (subjects >= 50000) return 15;
-    if (subjects >= 10000) return 10;
-    if (subjects >= 5000) return 5;
-    return Math.floor(subjects / 1000);
+    const s = this.params().data_subjects || 0;
+    if (s >= 100000) return 25;
+    if (s >= 50000) return 20;
+    if (s >= 10000) return 15;
+    if (s >= 5000) return 10;
+    if (s >= 1000) return 5;
+    if (s >= 500) return 3;
+    if (s > 0) return 1;
+    return 0;
   }
 
+  /**
+   * Volumen de datos scoring (max 15 pts):
+   * Number of data categories per person.
+   * >= 100 types → 15 pts
+   * >= 50 → 12 pts
+   * >= 20 → 10 pts
+   * >= 10 → 7 pts
+   * >= 5 → 5 pts
+   * < 5 → proportional up to 4 pts
+   */
   getVolumeScore(): number {
-    const volume = this.params().data_volume || 0;
-    if (volume >= 20) return 15;
-    if (volume >= 10) return 10;
-    if (volume >= 5) return 5;
-    return volume;
+    const v = this.params().data_volume || 0;
+    if (v >= 100) return 15;
+    if (v >= 50) return 12;
+    if (v >= 20) return 10;
+    if (v >= 10) return 7;
+    if (v >= 5) return 5;
+    if (v > 0) return Math.min(4, v);
+    return 0;
   }
 
+  /**
+   * Frecuencia scoring (max 15 pts):
+   * puntual → 0
+   * periódica → 8
+   * continua → 15
+   */
   getFrequencyScore(): number {
-    const scores: any = { puntual: 0, periodica: 10, continua: 20 };
+    const scores: Record<string, number> = { puntual: 0, periodica: 8, continua: 15 };
     return scores[this.params().frequency] || 0;
   }
 
+  /**
+   * Permanencia scoring (max 10 pts):
+   * ocasional → 2
+   * temporal → 5
+   * prolongada → 10
+   */
   getDurationScore(): number {
-    const scores: any = { ocasional: 0, temporal: 5, prolongada: 10 };
+    const scores: Record<string, number> = { ocasional: 2, temporal: 5, prolongada: 10 };
     return scores[this.params().duration] || 0;
   }
 
+  /**
+   * Alcance geográfico scoring (max 15 pts):
+   * local → 2
+   * regional → 5
+   * nacional → 10
+   * internacional → 15
+   */
   getGeographicScore(): number {
-    const scores: any = { local: 0, regional: 5, nacional: 10, internacional: 15 };
+    const scores: Record<string, number> = { local: 2, regional: 5, nacional: 10, internacional: 15 };
     return scores[this.params().geographic_scope] || 0;
   }
 
+  /**
+   * Datos especiales scoring (max 20 pts):
+   * Salud → 5 pts
+   * Financieros → 3 pts
+   * Biométricos → 5 pts
+   * Menores → 7 pts
+   */
   getSpecialScore(): number {
     let score = 0;
-    if (this.params().health_data) score += 10;
-    if (this.params().financial_data) score += 5;
-    if (this.params().biometric_data) score += 15;
-    if (this.params().minors_data) score += 20;
+    if (this.params().health_data) score += 5;
+    if (this.params().financial_data) score += 3;
+    if (this.params().biometric_data) score += 5;
+    if (this.params().minors_data) score += 7;
     return score;
   }
 
-  calculateScale(): void {
-    const total = this.getSubjectScore() + this.getVolumeScore() + this.getFrequencyScore() +
-                  this.getDurationScore() + this.getGeographicScore() + this.getSpecialScore();
-    this.totalScore.set(Math.min(100, total));
+  getTotalScore(): number {
+    return Math.min(100,
+      this.getSubjectScore() + this.getVolumeScore() + this.getFrequencyScore() +
+      this.getDurationScore() + this.getGeographicScore() + this.getSpecialScore()
+    );
+  }
+
+  hasDirectQualification(): boolean {
+    return this.params().direct_profiling || this.params().direct_surveillance || this.params().direct_sensitive_massive;
   }
 
   isLargeScale(): boolean {
-    // Direct qualification cases
-    if (this.params().direct_profiling || this.params().direct_surveillance || this.params().direct_sensitive_massive) {
-      return true;
-    }
-    // Score-based qualification
-    return this.totalScore() >= 50 || this.params().data_subjects >= 50000;
+    // Direct qualification always counts
+    if (this.hasDirectQualification()) return true;
+    // Score-based: threshold is 50
+    return this.getTotalScore() >= 50;
   }
 
   getResultClass(): string {
     return this.isLargeScale() ? 'large' : 'normal';
   }
 
-  generateReport(): void { alert('Generando informe MTGE...'); }
-  saveCalculation(): void { alert('Cálculo guardado'); }
-  viewRegulation(): void { window.open('https://spdp.gob.ec/r52026/', '_blank'); }
+  resetParams(): void {
+    this.params.set({
+      data_subjects: 0,
+      data_volume: 0,
+      frequency: 'puntual',
+      duration: 'ocasional',
+      geographic_scope: 'local',
+      health_data: false,
+      financial_data: false,
+      biometric_data: false,
+      minors_data: false,
+      direct_profiling: false,
+      direct_surveillance: false,
+      direct_sensitive_massive: false,
+    });
+  }
 
   updateParam(field: string, value: any): void {
     this.params.update(p => ({ ...p, [field]: value }));
