@@ -64,7 +64,20 @@ import { environment } from '../core/environment';
           <button class="logout-btn" (click)="auth.logout()" title="Salir">✕</button>
         </div>
       </aside>
-      <main class="main-content"><router-outlet /></main>
+      <main class="main-content">
+        @if (!auth.hasActiveSubscription() && auth.userRole() !== 'admin') {
+          <div class="sub-banner sub-banner-error">
+            <span>⚠️ Tu suscripción ha vencido o no tienes una activa. Las funcionalidades están bloqueadas.</span>
+            <a routerLink="/subscription" class="sub-banner-btn">Activar Plan</a>
+          </div>
+        } @else if (auth.subscriptionDaysRemaining() > 0 && auth.subscriptionDaysRemaining() <= 7 && auth.userRole() !== 'admin') {
+          <div class="sub-banner sub-banner-warning">
+            <span>⏳ Tu plan <strong>{{ auth.subscriptionPlanName() }}</strong> vence en {{ auth.subscriptionDaysRemaining() }} días.</span>
+            <a routerLink="/subscription" class="sub-banner-btn">Renovar</a>
+          </div>
+        }
+        <router-outlet />
+      </main>
     </div>
   `,
   styles: [`
@@ -101,6 +114,18 @@ import { environment } from '../core/environment';
     .logout-btn { background: none; border: none; color: #8890a8; cursor: pointer; padding: 0.375rem 0.5rem; border-radius: 6px; font-size: 0.875rem; }
     .logout-btn:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
     .main-content { flex: 1; margin-left: 260px; padding: 2rem; min-height: 100vh; }
+
+    /* Subscription banners */
+    .sub-banner { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; font-size: 0.875rem; font-weight: 500; animation: fadeIn 0.3s ease; gap: 1rem; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .sub-banner-error { background: linear-gradient(135deg, #fef2f2, #fee2e2); color: #991b1b; border: 1px solid #fecaca; }
+    .sub-banner-warning { background: linear-gradient(135deg, #fffbeb, #fef3c7); color: #92400e; border: 1px solid #fde68a; }
+    .sub-banner-btn { padding: 0.375rem 1rem; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.8125rem; white-space: nowrap; }
+    .sub-banner-error .sub-banner-btn { background: #ef4444; color: white; }
+    .sub-banner-error .sub-banner-btn:hover { background: #dc2626; }
+    .sub-banner-warning .sub-banner-btn { background: #f59e0b; color: white; }
+    .sub-banner-warning .sub-banner-btn:hover { background: #d97706; }
+
     @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; } }
   `],
 })
@@ -108,7 +133,12 @@ export class LayoutComponent {
   version = environment.version;
   toolsExpanded = signal(false);
 
-  constructor(public auth: AuthService) { }
+  constructor(public auth: AuthService) {
+    // Refresh subscription status on layout load
+    if (auth.isAuthenticated()) {
+      auth.refreshSubscription();
+    }
+  }
 
   toggleToolsMenu(): void {
     this.toolsExpanded.update(v => !v);
