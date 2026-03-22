@@ -43,18 +43,19 @@ export interface TenantSubscription {
 export interface SubscriptionPayment {
   id: number;
   subscription_id: number;
-  payment_method: 'credit_card' | 'bank_transfer' | 'payphone';
+  payment_method: 'credit_card' | 'bank_transfer' | 'payphone' | 'paypal';
   amount: number;
   currency: string;
   status: 'pending' | 'completed' | 'failed' | 'refunded';
   transaction_id?: string;
+  paypal_url?: string;
   paid_at?: string;
 }
 
 export interface SubscribeRequest {
   plan_id: number;
   billing_period: string;
-  payment_method: 'credit_card' | 'bank_transfer' | 'payphone';
+  payment_method: 'credit_card' | 'bank_transfer' | 'payphone' | 'paypal';
   company_count: number;
 }
 
@@ -94,6 +95,7 @@ export class SubscriptionService {
     payment?: {
       method: string;
       url?: string;
+      paypal_url?: string;
       transaction_id?: string;
       instructions?: any;
     }

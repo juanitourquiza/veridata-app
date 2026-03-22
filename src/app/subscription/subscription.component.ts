@@ -211,6 +211,19 @@ import { SubscriptionService, SubscriptionPlan, PlanPrice, TenantSubscription } 
                 <small>Depósito o transferencia</small>
               </span>
             </label>
+
+            <label class="payment-option">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="paypal"
+                [(ngModel)]="paymentMethod"
+              />
+              <span class="payment-label">
+                <strong>PayPal</strong>
+                <small>Pago seguro internacional</small>
+              </span>
+            </label>
           </div>
 
           <!-- Resumen -->
@@ -235,6 +248,8 @@ import { SubscriptionService, SubscriptionPlan, PlanPrice, TenantSubscription } 
             } @else {
               @if (paymentMethod() === 'payphone') {
                 Pagar con Tarjeta
+              } @else if (paymentMethod() === 'paypal') {
+                Pagar con PayPal
               } @else {
                 Solicitar Transferencia
               }
@@ -543,7 +558,7 @@ export class SubscriptionComponent implements OnInit {
   selectedPlan = signal<SubscriptionPlan | null>(null);
   selectedPeriod = signal<string | null>(null);
   companyCount = signal<number>(1);
-  paymentMethod = signal<'payphone' | 'bank_transfer' | null>(null);
+  paymentMethod = signal<'payphone' | 'bank_transfer' | 'paypal' | null>(null);
   processing = signal(false);
   error = signal<string | null>(null);
 
@@ -673,6 +688,9 @@ export class SubscriptionComponent implements OnInit {
         if (method === 'payphone' && response.payment?.url) {
           // Redirigir a PayPhone
           window.location.href = response.payment.url;
+        } else if (method === 'paypal' && response.payment?.paypal_url) {
+          // Redirigir a PayPal
+          window.location.href = response.payment.paypal_url;
         } else if (method === 'bank_transfer') {
           // Mostrar instrucciones de transferencia
           this.router.navigate(['/subscription/bank-transfer'], {

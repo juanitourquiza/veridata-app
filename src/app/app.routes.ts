@@ -9,7 +9,8 @@ export const routes: Routes = [
         loadComponent: () => import('./layout/layout.component').then(m => m.LayoutComponent),
         canActivate: [authGuard],
         children: [
-            { path: '', redirectTo: 'projects', pathMatch: 'full' },
+            { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+            { path: 'dashboard', loadComponent: () => import('./dashboard/dashboard.component').then(m => m.DashboardComponent) },
             { path: 'projects', loadComponent: () => import('./projects/project-list/project-list.component').then(m => m.ProjectListComponent) },
             { path: 'projects/new', loadComponent: () => import('./projects/project-wizard/project-wizard.component').then(m => m.ProjectWizardComponent) },
             { path: 'projects/:id', loadComponent: () => import('./projects/project-wizard/project-wizard.component').then(m => m.ProjectWizardComponent) },
