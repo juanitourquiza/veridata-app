@@ -18,6 +18,9 @@ export const routes: Routes = [
             // Suscripción
             { path: 'subscription', loadComponent: () => import('./subscription/subscription.component').then(m => m.SubscriptionComponent) },
 
+            // Configuración del Tenant
+            { path: 'config', loadComponent: () => import('./tenant-config/tenant-config.component').then(m => m.TenantConfigComponent) },
+
             // Herramientas y Registros PDP
             { path: 'tools/rat', loadComponent: () => import('./tools/rat/rat.component').then(m => m.RatComponent) },
             { path: 'tools/impact-assessment', loadComponent: () => import('./tools/impact-assessment/impact-assessment.component').then(m => m.ImpactAssessmentComponent) },
