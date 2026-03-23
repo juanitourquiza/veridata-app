@@ -16,6 +16,7 @@ import { environment } from '../core/environment';
         <nav class="sidebar-nav">
           <a routerLink="/projects" routerLinkActive="active" class="nav-item"><span class="nav-icon">📁</span><span>Proyectos</span></a>
           <a routerLink="/subscription" routerLinkActive="active" class="nav-item"><span class="nav-icon">💳</span><span>Mi Suscripción</span></a>
+          <a routerLink="/config" routerLinkActive="active" class="nav-item"><span class="nav-icon">⚙️</span><span>Configuración</span></a>
 
           <!-- Herramientas y Registros PDP - Expandable Menu -->
           <div class="nav-group">
