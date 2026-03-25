@@ -62,7 +62,10 @@ import { environment } from '../core/environment';
         </nav>
         <div class="sidebar-footer">
           <div class="user-info"><div class="user-avatar">{{ auth.currentUser()?.name?.charAt(0) || 'U' }}</div><div class="user-details"><span class="user-name">{{ auth.currentUser()?.name }}</span><span class="user-role">{{ auth.userRole() }}</span></div></div>
-          <button class="logout-btn" (click)="auth.logout()" title="Salir">✕</button>
+          <button class="logout-btn" (click)="auth.logout()" title="Cerrar sesion">
+            <span class="logout-icon">🚪</span>
+            <span class="logout-text">Salir</span>
+          </button>
         </div>
       </aside>
       <main class="main-content">
@@ -112,8 +115,10 @@ import { environment } from '../core/environment';
     .user-details { display: flex; flex-direction: column; }
     .user-name { font-size: 0.8125rem; font-weight: 600; }
     .user-role { font-size: 0.6875rem; color: #8890a8; text-transform: capitalize; }
-    .logout-btn { background: none; border: none; color: #8890a8; cursor: pointer; padding: 0.375rem 0.5rem; border-radius: 6px; font-size: 0.875rem; }
+    .logout-btn { background: none; border: none; color: #8890a8; cursor: pointer; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.8125rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; }
     .logout-btn:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+    .logout-icon { font-size: 1rem; }
+    .logout-text { font-weight: 500; }
     .main-content { flex: 1; margin-left: 260px; padding: 2rem; min-height: 100vh; }
 
     /* Subscription banners */
