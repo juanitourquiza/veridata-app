@@ -37,7 +37,6 @@ import { environment } from '../core/environment';
             <button type="submit" class="vd-btn vd-btn-primary login-btn" [disabled]="loading()">{{ loading() ? 'Ingresando...' : 'Ingresar' }}</button>
           </form>
           <p class="register-link">¿No tienes cuenta? <a routerLink="/register">Crear cuenta</a></p>
-          <div class="demo-credentials"><p><strong>Demo:</strong></p><small>Admin: admin&#64;veridata.io / password123</small><br><small>Senior: senior&#64;veridata.io / password123</small><br><small>Junior: junior&#64;veridata.io / password123</small></div>
           <div class="version-tag">v{{ version }}</div>
         </div>
       </div>

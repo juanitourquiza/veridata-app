@@ -1,4 +1,4 @@
-# Veridata App — v2.1.0
+# Veridata App — v2.2.0
 
 Plataforma de evaluación de cumplimiento de protección de datos personales (LOPDP Ecuador).
 
@@ -7,14 +7,6 @@ Plataforma de evaluación de cumplimiento de protección de datos personales (LO
 - **Frontend:** Angular 19 (standalone components, signals)
 - **Estilos:** CSS vanilla con design system personalizado
 - **API:** REST con token Bearer (Laravel Sanctum)
-
-## Credenciales de prueba
-
-| Rol | Email | Contraseña | Permisos |
-|-----|-------|------------|----------|
-| Admin | admin@veridata.io | password123 | Acceso completo |
-| Senior | senior@veridata.io | password123 | Crear proyectos, evaluar, generar reportes, aprobar |
-| Junior | junior@veridata.io | password123 | Ver proyectos, evaluar, generar reportes (no crea proyectos) |
 
 ## Desarrollo local
 
@@ -30,6 +22,14 @@ ng build --configuration=production
 ```
 
 Los archivos se generan en `dist/veridata-app/browser/`.
+
+## Changelog v2.2.0
+
+### 🔧 Mejoras y Fixes
+- Repositorio de entregables con sistema de versiones completo
+- Dashboard accesible sin suscripción activa
+- Fix de navegación del menú Herramientas PDP
+- Eliminación de credenciales demo del login
 
 ## Changelog v2.1.0
 
