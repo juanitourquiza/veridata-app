@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import {
-  Project, Framework, ControlDomain, Control, Evaluation, Gap, ActionItem, ExecutiveReport, DomainMaturity, Deliverable, User
+  Project, Framework, ControlDomain, Control, Evaluation, Gap, ActionItem, ExecutiveReport, DomainMaturity, Deliverable, DeliverableVersion, User
 } from '../../core/models/models';
 
 @Component({
@@ -606,12 +606,12 @@ import {
             </div>
           </div>
 
-          <!-- Lista de Entregables -->
+          <!-- Lista de Entregables (clickeable) -->
           <div class="repo-section">
             <h3>📑 Todos los Entregables</h3>
             <div class="repo-deliverables-list">
               @for (deliverable of deliverables(); track deliverable.id) {
-                <div class="repo-deliverable-item" [class.completed]="deliverable.status === 'generated' || deliverable.status === 'uploaded'">
+                <div class="repo-deliverable-item" [class.completed]="deliverable.status === 'generated' || deliverable.status === 'uploaded'" [class.selected]="selectedRepoDeliverable()?.id === deliverable.id" (click)="selectRepoDeliverable(deliverable)" style="cursor:pointer">
                   <div class="repo-deliverable-icon">
                     @switch (deliverable.status) {
                       @case ('pending') { ⏳ }
@@ -623,7 +623,10 @@ import {
                     <strong>{{ deliverable.title }}</strong>
                     <span class="repo-deliverable-type">{{ deliverable.domain_name }}</span>
                   </div>
-                  <div class="repo-deliverable-status">
+                  <div class="repo-deliverable-status" style="display:flex;align-items:center;gap:0.5rem">
+                    @if (deliverable.current_version > 0) {
+                      <span class="version-badge">v{{ deliverable.current_version }}</span>
+                    }
                     <span class="vd-badge" [class.vd-badge-baja]="deliverable.status === 'generated' || deliverable.status === 'uploaded'" [class.vd-badge-media]="deliverable.status === 'pending'">
                       {{ deliverable.status === 'pending' ? 'Pendiente' : deliverable.status === 'generated' ? 'Generado' : 'Subido' }}
                     </span>
@@ -635,7 +638,7 @@ import {
 
           <!-- Historial de Evaluaciones -->
           <div class="repo-section">
-            <h3>� Historial de Evaluaciones</h3>
+            <h3>◆ Historial de Evaluaciones</h3>
             <div class="repo-snapshots-list">
               @for (snapshot of evaluationSnapshots(); track snapshot.id) {
                 <div class="repo-snapshot-item">
@@ -679,8 +682,87 @@ import {
           </div>
         </div>
       </div>
+
+      <!-- Panel de Versiones del Entregable seleccionado -->
+      @if (selectedRepoDeliverable()) {
+        <div class="vd-card" style="margin-top:1.25rem">
+          <div class="section-header">
+            <div>
+              <h3>📄 {{ selectedRepoDeliverable()!.title }}</h3>
+              <small style="color:#64748b">{{ selectedRepoDeliverable()!.description }}</small>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:center">
+              @if (selectedRepoDeliverable()!.current_version > 0) {
+                <span class="version-current-badge">Versión {{ selectedRepoDeliverable()!.current_version }}</span>
+              }
+              @if (selectedRepoDeliverable()!.content && !isReadOnly()) {
+                <button class="vd-btn vd-btn-primary vd-btn-sm" (click)="showVersionSaveDialog.set(true)">💾 Guardar versión</button>
+              }
+              <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="selectedRepoDeliverable.set(null)">✕ Cerrar</button>
+            </div>
+          </div>
+
+          @if (loadingVersions()) {
+            <div style="text-align:center;padding:2rem;color:#64748b">Cargando versiones...</div>
+          } @else if (deliverableVersions().length === 0) {
+            <div class="version-empty">
+              <div style="font-size:2.5rem;opacity:0.3">📋</div>
+              <p>No hay versiones guardadas para este entregable.</p>
+              <p style="font-size:0.8125rem">Las versiones se crean automáticamente al generar contenido con IA, o puedes guardar una versión manualmente.</p>
+            </div>
+          } @else {
+            <div class="version-timeline">
+              @for (version of deliverableVersions(); track version.id) {
+                <div class="version-item" [class.active]="version.version_number === selectedRepoDeliverable()!.current_version">
+                  <div class="version-dot"></div>
+                  <div class="version-content">
+                    <div class="version-header">
+                      <div class="version-title">
+                        <strong>Versión {{ version.version_number }}</strong>
+                        <span class="version-type-badge" [class.ai]="version.generated_by === 'ai'" [class.manual]="version.generated_by === 'manual'">{{ version.generated_by === 'ai' ? '🤖 IA' : '✍️ Manual' }}</span>
+                      </div>
+                      <span class="version-date">{{ version.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
+                    </div>
+                    @if (version.notes) {
+                      <p class="version-notes">{{ version.notes }}</p>
+                    }
+                    <div class="version-actions">
+                      @if (version.version_number !== selectedRepoDeliverable()!.current_version && !isReadOnly()) {
+                        <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="restoreVersion(selectedRepoDeliverable()!.id, version.id, version.version_number)">↩️ Restaurar</button>
+                      } @else if (version.version_number === selectedRepoDeliverable()!.current_version) {
+                        <span class="version-active-label">✅ Versión actual</span>
+                      }
+                      <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadDeliverablePdf(selectedRepoDeliverable()!.id)">📄 PDF</button>
+                      <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="downloadDeliverableWord(selectedRepoDeliverable()!.id)">📝 Word</button>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
       <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(5)">← Anterior</button><button class="vd-btn vd-btn-primary" (click)="finishProject()">Finalizar ✓</button></div>
     }
+
+    <!-- Save Version Dialog -->
+    @if (showVersionSaveDialog()) {
+      <div class="snapshot-dialog-overlay" (click)="showVersionSaveDialog.set(false)">
+        <div class="snapshot-dialog" (click)="$event.stopPropagation()">
+          <h3>💾 Guardar Versión</h3>
+          <p style="color:#64748b;font-size:0.875rem;margin-bottom:1rem">Se guardará una copia del contenido actual del entregable como una nueva versión.</p>
+          <div class="form-group">
+            <label>Notas (opcional)</label>
+            <textarea #versionNotes class="vd-input" rows="3" placeholder="Ej: Revisión legal aprobada, Versión final para auditoría..."></textarea>
+          </div>
+          <div class="dialog-actions">
+            <button class="vd-btn vd-btn-secondary" (click)="showVersionSaveDialog.set(false)">Cancelar</button>
+            <button class="vd-btn vd-btn-primary" (click)="saveVersion(selectedRepoDeliverable()!.id, versionNotes.value)" [disabled]="savingVersion()">{{ savingVersion() ? 'Guardando...' : 'Guardar Versión' }}</button>
+          </div>
+        </div>
+      </div>
+    }     
 
     <!-- Save Snapshot Dialog -->
     @if (showSnapshotDialog()) {
@@ -863,6 +945,31 @@ import {
     .repo-trace-label { font-size: 0.875rem; color: #64748b; }
     .repo-trace-value { font-weight: 600; color: #1e293b; }
 
+    /* Deliverable Versioning */
+    .repo-deliverable-item.selected { border-color: #5687f3; background: rgba(86,135,243,0.06); }
+    .repo-deliverable-item:hover { background: #f8fafc; border-color: #cbd5e1; }
+    .version-badge { font-size: 0.625rem; font-weight: 700; color: #5687f3; background: rgba(86,135,243,0.12); padding: 0.125rem 0.5rem; border-radius: 999px; letter-spacing: 0.02em; }
+    .version-current-badge { font-size: 0.75rem; font-weight: 700; color: white; background: linear-gradient(135deg, #5687f3, #7ba3f7); padding: 0.25rem 0.75rem; border-radius: 999px; }
+    .version-empty { text-align: center; padding: 2.5rem; color: #64748b; }
+    .version-timeline { position: relative; padding-left: 1.5rem; }
+    .version-timeline::before { content: ''; position: absolute; left: 0.5rem; top: 0.75rem; bottom: 0.75rem; width: 2px; background: #e2e8f0; }
+    .version-item { position: relative; display: flex; gap: 1rem; margin-bottom: 1rem; }
+    .version-item.active .version-dot { background: #5687f3; box-shadow: 0 0 0 4px rgba(86,135,243,0.2); }
+    .version-item.active .version-content { border-color: #5687f3; background: rgba(86,135,243,0.03); }
+    .version-dot { position: absolute; left: -1.25rem; top: 0.625rem; width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1; border: 2px solid white; z-index: 1; transition: all 0.2s; }
+    .version-content { flex: 1; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 10px; background: white; transition: all 0.2s; }
+    .version-content:hover { border-color: #cbd5e1; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .version-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+    .version-title { display: flex; align-items: center; gap: 0.5rem; }
+    .version-title strong { font-size: 0.9375rem; color: #1e293b; }
+    .version-type-badge { font-size: 0.6875rem; font-weight: 600; padding: 0.125rem 0.5rem; border-radius: 999px; }
+    .version-type-badge.ai { background: rgba(139,92,246,0.1); color: #7c3aed; }
+    .version-type-badge.manual { background: rgba(34,197,94,0.1); color: #16a34a; }
+    .version-date { font-size: 0.75rem; color: #94a3b8; }
+    .version-notes { font-size: 0.8125rem; color: #64748b; margin: 0 0 0.5rem; font-style: italic; }
+    .version-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .version-active-label { font-size: 0.75rem; font-weight: 600; color: #22c55e; }
+
     @media (max-width: 768px) {
       .form-grid, .results-grid, .gap-summary { grid-template-columns: 1fr; }
       .ai-controls { grid-template-columns: 1fr 1fr; }
@@ -989,6 +1096,13 @@ export class ProjectWizardComponent implements OnInit {
 
   manualLargeScale: boolean | null = null;
   deliverableTab: 'pending' | 'generated' = 'pending';
+
+  // Deliverable Version signals
+  selectedRepoDeliverable = signal<Deliverable | null>(null);
+  deliverableVersions = signal<DeliverableVersion[]>([]);
+  savingVersion = signal(false);
+  showVersionSaveDialog = signal(false);
+  loadingVersions = signal(false);
 
   // Role-based access control - Junior users are read-only
   isReadOnly = computed(() => this.auth.userRole() === 'junior');
@@ -1960,6 +2074,72 @@ export class ProjectWizardComponent implements OnInit {
     if (criticality === 'alto') return 'media';
     if (criticality === 'medio') return 'baja';
     return 'baja';
+  }
+
+  // ── Deliverable Version Management ─────────────────────────
+
+  selectRepoDeliverable(deliverable: Deliverable): void {
+    // Toggle selection
+    if (this.selectedRepoDeliverable()?.id === deliverable.id) {
+      this.selectedRepoDeliverable.set(null);
+      this.deliverableVersions.set([]);
+      return;
+    }
+
+    this.selectedRepoDeliverable.set(deliverable);
+    this.loadingVersions.set(true);
+    this.deliverableVersions.set([]);
+
+    this.api.getDeliverableVersions(this.projectId, deliverable.id).subscribe({
+      next: (res: { versions: DeliverableVersion[] }) => {
+        this.deliverableVersions.set(res.versions);
+        this.loadingVersions.set(false);
+      },
+      error: () => {
+        this.loadingVersions.set(false);
+      }
+    });
+  }
+
+  saveVersion(delivId: number, notes: string): void {
+    this.savingVersion.set(true);
+    this.api.saveDeliverableVersion(this.projectId, delivId, notes || undefined).subscribe({
+      next: (res: { version: DeliverableVersion; deliverable: Deliverable }) => {
+        // Update deliverable in the list
+        const items = this.deliverables().map(d => d.id === delivId ? res.deliverable : d);
+        this.deliverables.set(items);
+        this.selectedRepoDeliverable.set(res.deliverable);
+
+        // Add the new version to the top of the list
+        this.deliverableVersions.set([res.version, ...this.deliverableVersions()]);
+
+        this.savingVersion.set(false);
+        this.showVersionSaveDialog.set(false);
+      },
+      error: () => {
+        this.savingVersion.set(false);
+        alert('Error al guardar la versión.');
+      }
+    });
+  }
+
+  restoreVersion(delivId: number, versionId: number, versionNumber: number): void {
+    if (!confirm(`¿Restaurar a la versión ${versionNumber}? El contenido actual del entregable será reemplazado.`)) return;
+
+    this.api.restoreDeliverableVersion(this.projectId, delivId, versionId).subscribe({
+      next: (res: { message: string; deliverable: Deliverable }) => {
+        // Update deliverable in the list
+        const items = this.deliverables().map(d => d.id === delivId ? res.deliverable : d);
+        this.deliverables.set(items);
+        this.selectedRepoDeliverable.set(res.deliverable);
+
+        // Also update in step 5 if same deliverable is selected
+        if (this.selectedDeliverable()?.id === delivId) {
+          this.selectedDeliverable.set(res.deliverable);
+        }
+      },
+      error: () => alert('Error al restaurar la versión.')
+    });
   }
 
   finishProject(): void {
