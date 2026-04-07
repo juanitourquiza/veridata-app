@@ -358,6 +358,7 @@ export class TransferQualificationComponent implements OnInit {
 
   getCriterionResultLabel(criterion: any): string {
     const result = this.getCriterionResult(criterion);
+    if (!criterion.response) return '';
     return result === 'cumple' ? '✅ CUMPLE'
       : result === 'no-aplica' ? '⚪ NO APLICA'
       : '❌ NO CUMPLE';

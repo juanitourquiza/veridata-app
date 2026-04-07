@@ -274,7 +274,10 @@ export class QualificationsSummaryComponent implements OnInit {
         this.officerQualifications.set(res.data || []);
         checkDone();
       },
-      error: () => checkDone()
+      error: (err) => {
+        console.error('Error loading officer qualifications:', err);
+        checkDone();
+      }
     });
 
     this.pdpToolsService.getTransferQualifications({ per_page: 100 }).subscribe({
@@ -282,8 +285,15 @@ export class QualificationsSummaryComponent implements OnInit {
         this.transferQualifications.set(res.data || []);
         checkDone();
       },
-      error: () => checkDone()
+      error: (err) => {
+        console.error('Error loading transfer qualifications:', err);
+        checkDone();
+      }
     });
+  }
+
+  refreshData(): void {
+    this.loadData();
   }
 
   formatDataTypes(types: any): string {

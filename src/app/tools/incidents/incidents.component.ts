@@ -34,16 +34,16 @@ import { PdpToolsService } from '../pdp-tools.service';
                 <label class="vd-label">Tipo de incidente *</label>
                 <select class="vd-select" [ngModel]="newIncident().type" (ngModelChange)="updateNewIncident('type', $event)">
                   <option value="">Seleccionar...</option>
+                  <option value="perdida">Pérdida de datos</option>
+                  <option value="robo_hurto">Robo o hurto</option>
                   <option value="acceso_no_autorizado">Acceso no autorizado</option>
-                  <option value="divulgacion_no_autorizada">Divulgación no autorizada</option>
                   <option value="modificacion_no_autorizada">Modificación no autorizada</option>
-                  <option value="perdida">Pérdida / destrucción de datos</option>
-                  <option value="robo">Robo o sustracción</option>
-                  <option value="ataque_cibernetico">Ataque cibernético / ransomware</option>
-                  <option value="phishing">Phishing / ingeniería social</option>
+                  <option value="eliminacion_no_autorizada">Eliminación no autorizada</option>
+                  <option value="copia_no_autorizada">Copia no autorizada</option>
+                  <option value="transmision_no_autorizada">Transmisión no autorizada</option>
+                  <option value="falla_tecnica">Falla técnica</option>
                   <option value="error_humano">Error humano</option>
-                  <option value="falla_tecnica">Falla técnica / del sistema</option>
-                  <option value="tratamiento_no_autorizado">Tratamiento ilícito o no autorizado</option>
+                  <option value="ataque_cibernetico">Ataque cibernético</option>
                 </select>
               </div>
               <div class="form-group">
@@ -485,11 +485,16 @@ export class IncidentsComponent implements OnInit {
 
   getTypeLabel(type: string): string {
     const labels: Record<string, string> = {
-      acceso_no_autorizado: 'Acceso no autorizado', divulgacion_no_autorizada: 'Divulgación',
-      modificacion_no_autorizada: 'Modificación', perdida: 'Pérdida/destrucción',
-      robo: 'Robo', ataque_cibernetico: 'Ciberataque', phishing: 'Phishing',
-      error_humano: 'Error humano', falla_tecnica: 'Falla técnica',
-      tratamiento_no_autorizado: 'Tratamiento ilícito',
+      perdida: 'Pérdida de datos',
+      robo_hurto: 'Robo o hurto',
+      acceso_no_autorizado: 'Acceso no autorizado',
+      modificacion_no_autorizada: 'Modificación no autorizada',
+      eliminacion_no_autorizada: 'Eliminación no autorizada',
+      copia_no_autorizada: 'Copia no autorizada',
+      transmision_no_autorizada: 'Transmisión no autorizada',
+      falla_tecnica: 'Falla técnica',
+      error_humano: 'Error humano',
+      ataque_cibernetico: 'Ataque cibernético',
     };
     return labels[type] || type;
   }
