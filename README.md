@@ -38,8 +38,12 @@ Los archivos se generan en `dist/veridata-app/browser/`.
 - **Incidentes**: 10 tipos actualizados según matriz oficial SPDP Ecuador
 
 ### 🐛 Fixes Críticos
-- **Restauración del menú PDP**: Menú expandible de Herramientas y Registros PDP restaurado en sidebar
 - **Modelos separados**: Backend PSR-4 — 10 modelos individuales en lugar de archivo monolítico
+
+### 🏗️ Arquitectura: Herramientas por Proyecto
+- Las herramientas PDP se acceden desde el **Step 7 del wizard de cada proyecto**
+- Cada registro de herramienta queda vinculado a un proyecto individual (project_id)
+- Sidebar limpio: solo Proyectos, Suscripción y Configuración
 
 ## Changelog v2.2.0
 
