@@ -1,6 +1,7 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
 
 // RAT Component - Registro de Actividades de Tratamiento
@@ -11,10 +12,15 @@ import { PdpToolsService } from '../pdp-tools.service';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="tools-container">
-      <header class="tools-header">
-        <h1>📋 Registro de Actividades de Tratamiento (RAT)</h1>
-        <p class="tools-subtitle">Matriz completa de tratamiento de datos personales con evaluación de riesgos e impacto</p>
-      </header>
+      <div class="tools-header">
+        <div class="header-title">
+          <h1>� Registro de Actividades de Tratamiento (RAT)</h1>
+          @if (projectId()) {
+            <div class="project-badge">📁 Proyecto #{{ projectId() }}</div>
+          }
+        </div>
+        <p class="tools-subtitle">Inventario de tratamientos de datos personales según Art. 12 LOPDP</p>
+      </div>
 
       <!-- Upload Section -->
       <div class="vd-card upload-section">
@@ -116,8 +122,10 @@ import { PdpToolsService } from '../pdp-tools.service';
   styles: [`
     .tools-container { max-width: 1400px; margin: 0 auto; }
     .tools-header { margin-bottom: 1.5rem; }
-    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0 0 0.5rem; }
-    .tools-subtitle { color: #64748b; font-size: 0.875rem; }
+    .header-title { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0; }
+    .project-badge { background: rgba(86,135,243,0.1); color: #5687f3; padding: 0.375rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 500; border: 1px solid rgba(86,135,243,0.2); }
+    .tools-subtitle { color: #64748b; font-size: 0.875rem; margin-top: 0.5rem; }
     .upload-section { margin-bottom: 1.5rem; }
     .upload-section h3 { margin: 0 0 1rem; font-size: 1rem; }
     .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
@@ -154,17 +162,27 @@ export class RatComponent implements OnInit {
   ratHistory = signal<any[]>([]);
   processing = signal(false);
   processingStatus = signal('');
+  projectId = signal<number | null>(null);
   ratInfo = signal<any>({ name: '', code: '', version: '1.0', area: '' });
 
   private pdpToolsService = inject(PdpToolsService);
+  private route = inject(ActivatedRoute);
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const pid = params['project_id'];
+      if (pid) this.projectId.set(parseInt(pid, 10));
+    });
     this.loadActivities();
     this.loadRatHistory();
   }
 
   loadRatHistory(): void {
-    this.pdpToolsService.getRatRecords().subscribe({
+    const params: any = {};
+    if (this.projectId()) {
+      params.project_id = this.projectId();
+    }
+    this.pdpToolsService.getRatRecords(params).subscribe({
       next: (res) => {
         this.ratHistory.set(res.data || []);
       },

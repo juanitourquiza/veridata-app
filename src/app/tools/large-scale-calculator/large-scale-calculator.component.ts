@@ -1,6 +1,7 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
 
 // Large Scale Calculator - Cálculo de Gran Escala según Art. 14 LOPDP y R52-2026
@@ -12,8 +13,13 @@ import { PdpToolsService } from '../pdp-tools.service';
   template: `
     <div class="tools-container">
       <header class="tools-header">
-        <h1>📊 Cálculo de Gran Escala</h1>
-        <p class="tools-subtitle">Determinación de tratamiento a gran escala según Reglamento R52-2026 de la SPDP Ecuador</p>
+        <div class="header-title">
+          <h1>� Cálculo de Gran Escala (MTGE)</h1>
+          @if (projectId()) {
+            <div class="project-badge">📁 Proyecto #{{ projectId() }}</div>
+          }
+        </div>
+        <p class="tools-subtitle">Matriz Técnica de Gran Escala según Art. 8 LOPDP</p>
       </header>
 
       <!-- Calculator Form -->
@@ -255,7 +261,10 @@ import { PdpToolsService } from '../pdp-tools.service';
   styles: [`
     .tools-container { max-width: 1200px; margin: 0 auto; }
     .tools-header { margin-bottom: 1.5rem; }
-    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0 0 0.5rem; }
+    .header-title { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0; }
+    .project-badge { background: rgba(86,135,243,0.1); color: #5687f3; padding: 0.375rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 500; border: 1px solid rgba(86,135,243,0.2); }
+    .tools-subtitle { color: #64748b; font-size: 0.875rem; margin-top: 0.5rem; }
     .tools-subtitle { color: #64748b; font-size: 0.875rem; }
     .section-desc { color: #64748b; font-size: 0.875rem; margin: 0.5rem 0 1rem; }
     .calc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
@@ -306,7 +315,8 @@ import { PdpToolsService } from '../pdp-tools.service';
     @media (max-width: 640px) { .calc-grid { grid-template-columns: 1fr; } .detail-grid { grid-template-columns: 1fr; } .result-actions { flex-direction: column; } }
   `],
 })
-export class LargeScaleCalculatorComponent {
+export class LargeScaleCalculatorComponent implements OnInit {
+  projectId = signal<number | null>(null);
   params = signal<any>({
     data_subjects_band: '1',
     data_volume_band: '0.5',
@@ -324,7 +334,15 @@ export class LargeScaleCalculatorComponent {
     direct_courier: false,
   });
 
+  private route = inject(ActivatedRoute);
   private pdpToolsService = inject(PdpToolsService);
+
+  ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const pid = params['project_id'];
+      if (pid) this.projectId.set(parseInt(pid, 10));
+    });
+  }
 
   /**
    * Titulares scoring según MTGE:

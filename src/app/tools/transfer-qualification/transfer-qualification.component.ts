@@ -1,6 +1,7 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
 
 // Transfer Qualification Component - Calificación de Transferencias Internacionales
@@ -16,10 +17,15 @@ interface DataTypeOption {
   imports: [CommonModule, FormsModule],
   template: `
     <div class="tools-container">
-      <header class="tools-header">
-        <h1>🌍 Calificación de Transferencias Internacionales</h1>
-        <p class="tools-subtitle">Matriz mínima de calificación según LOPDP Ecuador para transferencias de datos personales fuera del país</p>
-      </header>
+      <div class="tools-header">
+        <div class="header-title">
+          <h1>🌍 Transferencias Internacionales</h1>
+          @if (projectId()) {
+            <div class="project-badge">📁 Proyecto #{{ projectId() }}</div>
+          }
+        </div>
+        <p class="tools-subtitle">Evaluación de transferencias según Art. 13 LOPDP</p>
+      </div>
 
       <!-- Transfer Info -->
       <div class="vd-card">
@@ -210,8 +216,10 @@ interface DataTypeOption {
   styles: [`
     .tools-container { max-width: 1400px; margin: 0 auto; }
     .tools-header { margin-bottom: 1.5rem; }
-    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0 0 0.5rem; }
-    .tools-subtitle { color: #64748b; font-size: 0.875rem; }
+    .header-title { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0; }
+    .project-badge { background: rgba(86,135,243,0.1); color: #5687f3; padding: 0.375rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 500; border: 1px solid rgba(86,135,243,0.2); }
+    .tools-subtitle { color: #64748b; font-size: 0.875rem; margin-top: 0.5rem; }
     .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem; }
     .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
     .form-group-full { grid-column: 1 / -1; }
@@ -281,6 +289,7 @@ interface DataTypeOption {
   `],
 })
 export class TransferQualificationComponent implements OnInit {
+  projectId = signal<number | null>(null);
   transfer = signal<any>({
     destination_country: '',
     recipient: '',
@@ -327,8 +336,13 @@ export class TransferQualificationComponent implements OnInit {
   generatingReport = signal(false);
 
   private pdpToolsService = inject(PdpToolsService);
+  private route = inject(ActivatedRoute);
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const pid = params['project_id'];
+      if (pid) this.projectId.set(parseInt(pid, 10));
+    });
     this.loadHistory();
   }
 
@@ -446,11 +460,15 @@ export class TransferQualificationComponent implements OnInit {
   }
 
   loadHistory(): void {
-    this.pdpToolsService.getTransferQualifications().subscribe({
+    const params: any = {};
+    if (this.projectId()) {
+      params.project_id = this.projectId();
+    }
+    this.pdpToolsService.getTransferQualifications(params).subscribe({
       next: (res: any) => {
         this.qualificationHistory.set(res.data || []);
       },
-      error: (err: any) => console.error('Error loading transfers:', err)
+      error: (err: any) => console.error('Error loading qualifications:', err)
     });
   }
 

@@ -1,6 +1,7 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
 
 // Officer Qualification Component - Calificación de Encargados del Tratamiento
@@ -16,10 +17,15 @@ interface DataTypeOption {
   imports: [CommonModule, FormsModule],
   template: `
     <div class="tools-container">
-      <header class="tools-header">
-        <h1>⭐ Calificación de Encargados del Tratamiento</h1>
-        <p class="tools-subtitle">Evaluación de proveedores y encargados según matriz de calificación LOPDP Ecuador</p>
-      </header>
+      <div class="tools-header">
+        <div class="header-title">
+          <h1>👤 Habilitación de Encargados</h1>
+          @if (projectId()) {
+            <div class="project-badge">📁 Proyecto #{{ projectId() }}</div>
+          }
+        </div>
+        <p class="tools-subtitle">Calificación de proveedores según Art. 9 LOPDP</p>
+      </div>
 
       <!-- Provider Info -->
       <div class="vd-card">
@@ -214,8 +220,10 @@ interface DataTypeOption {
   styles: [`
     .tools-container { max-width: 1400px; margin: 0 auto; }
     .tools-header { margin-bottom: 1.5rem; }
-    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0 0 0.5rem; }
-    .tools-subtitle { color: #64748b; font-size: 0.875rem; }
+    .header-title { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0; }
+    .project-badge { background: rgba(86,135,243,0.1); color: #5687f3; padding: 0.375rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 500; border: 1px solid rgba(86,135,243,0.2); }
+    .tools-subtitle { color: #64748b; font-size: 0.875rem; margin-top: 0.5rem; }
     .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
     .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
     .form-group-full { grid-column: 1 / -1; }
@@ -280,6 +288,7 @@ interface DataTypeOption {
   `],
 })
 export class OfficerQualificationComponent implements OnInit {
+  projectId = signal<number | null>(null);
   provider = signal<any>({
     name: '',
     service: '',
@@ -327,8 +336,13 @@ export class OfficerQualificationComponent implements OnInit {
   generatingReport = signal(false);
 
   private pdpToolsService = inject(PdpToolsService);
+  private route = inject(ActivatedRoute);
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const pid = params['project_id'];
+      if (pid) this.projectId.set(parseInt(pid, 10));
+    });
     this.loadHistory();
   }
 
@@ -351,9 +365,29 @@ export class OfficerQualificationComponent implements OnInit {
   // Scoring
   calculateScore(control: any): void {
     const maxPts = control.max_points || 15;
-    control.score = control.response === 'si' ? maxPts
+    const newScore = control.response === 'si' ? maxPts
       : control.response === 'parcial' ? Math.round(maxPts / 2)
       : 0;
+
+    // Update the control in the signal with new score
+    this.controls.update(ctrls =>
+      ctrls.map(c => c.id === control.id ? { ...c, score: newScore } : c)
+    );
+  }
+
+  recalculateAllScores(): void {
+    this.controls.update(ctrls =>
+      ctrls.map(c => {
+        if (c.response === 'na' || c.response === '') {
+          return { ...c, score: 0 };
+        }
+        const maxPts = c.max_points || 15;
+        const newScore = c.response === 'si' ? maxPts
+          : c.response === 'parcial' ? Math.round(maxPts / 2)
+          : 0;
+        return { ...c, score: newScore };
+      })
+    );
   }
 
   calculateTotalScore(): number {
@@ -430,6 +464,9 @@ export class OfficerQualificationComponent implements OnInit {
 
     this.saving.set(true);
 
+    // Recalculate all scores before saving
+    this.recalculateAllScores();
+
     const data = {
       provider_name: this.provider().name,
       service: this.provider().service,
@@ -441,17 +478,19 @@ export class OfficerQualificationComponent implements OnInit {
         code: c.code,
         response: c.response,
         observation: c.observation,
+        score: c.score,
       }))
     };
 
     this.pdpToolsService.createOfficerQualification(data).subscribe({
       next: (res: any) => {
         this.currentQualificationId.set(res.id);
-        // Update controls with server IDs
+        // Update controls with server data including scores
         if (res.controls) {
           this.controls.set(res.controls.map((c: any) => ({
             ...c,
             blocks: !!c.blocks,
+            score: typeof c.score === 'number' ? c.score : 0,
           })));
         }
         alert('Calificación guardada exitosamente');
@@ -466,7 +505,11 @@ export class OfficerQualificationComponent implements OnInit {
   }
 
   loadHistory(): void {
-    this.pdpToolsService.getOfficerQualifications().subscribe({
+    const params: any = {};
+    if (this.projectId()) {
+      params.project_id = this.projectId();
+    }
+    this.pdpToolsService.getOfficerQualifications(params).subscribe({
       next: (res: any) => {
         this.qualificationHistory.set(res.data || []);
       },
@@ -486,10 +529,15 @@ export class OfficerQualificationComponent implements OnInit {
           international_transfer: !!res.international_transfer,
           uses_subprocessors: !!res.uses_subprocessors,
         });
-        this.controls.set((res.controls || []).map((c: any) => ({
+        // Map controls and ensure scores are numbers
+        const mappedControls = (res.controls || []).map((c: any) => ({
           ...c,
           blocks: !!c.blocks,
-        })));
+          score: typeof c.score === 'number' ? c.score : 0,
+        }));
+        this.controls.set(mappedControls);
+        // Recalculate to ensure UI is in sync
+        this.recalculateAllScores();
       },
       error: (err: any) => alert('Error al cargar: ' + (err.error?.message || err.message))
     });

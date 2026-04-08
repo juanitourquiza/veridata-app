@@ -1,6 +1,7 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
 
 // Incidents Component - Registro de Incidentes PDP con decisión automática SPDP
@@ -11,7 +12,12 @@ import { PdpToolsService } from '../pdp-tools.service';
   template: `
     <div class="tools-container">
       <header class="tools-header">
-        <h1>🚨 Registro de Incidentes de Protección de Datos</h1>
+        <div class="header-title">
+          <h1>🚨 Registro de Incidentes de Protección de Datos</h1>
+          @if (projectId()) {
+            <div class="project-badge">📁 Proyecto #{{ projectId() }}</div>
+          }
+        </div>
         <p class="tools-subtitle">Matriz de registro y decisión automática de notificación a la Superintendencia de Protección de Datos</p>
       </header>
 
@@ -266,7 +272,9 @@ import { PdpToolsService } from '../pdp-tools.service';
               <option value="notificar">Requieren notificación</option>
               <option value="no_notificar">No requieren</option>
             </select>
-            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="exportIncidents()">📥 Exportar</button>
+            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="exportIncidents()" [disabled]="exporting()">
+              {{ exporting() ? '⏳ Exportando...' : '📥 Exportar' }}
+            </button>
           </div>
         </div>
 
@@ -347,8 +355,10 @@ import { PdpToolsService } from '../pdp-tools.service';
   styles: [`
     .tools-container { max-width: 1400px; margin: 0 auto; }
     .tools-header { margin-bottom: 1.5rem; }
-    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0 0 0.5rem; }
-    .tools-subtitle { color: #64748b; font-size: 0.875rem; }
+    .header-title { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0; }
+    .project-badge { background: rgba(86,135,243,0.1); color: #5687f3; padding: 0.375rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 500; border: 1px solid rgba(86,135,243,0.2); }
+    .tools-subtitle { color: #64748b; font-size: 0.875rem; margin-top: 0.5rem; }
     .incident-form { display: flex; flex-direction: column; gap: 1.5rem; }
     .form-section h4 { margin: 0 0 1rem; font-size: 0.875rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
     .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
@@ -452,10 +462,20 @@ export class IncidentsComponent implements OnInit {
   filterDecision = signal<string>('');
   lastIncidentDecision = signal<any>(null);
   saving = signal(false);
+  exporting = signal(false);
+  projectId = signal<number | null>(null);
 
   private pdpToolsService = inject(PdpToolsService);
+  private route = inject(ActivatedRoute);
 
   ngOnInit(): void {
+    // Read project_id from query params
+    this.route.queryParams.subscribe(params => {
+      const pid = params['project_id'];
+      if (pid) {
+        this.projectId.set(parseInt(pid, 10));
+      }
+    });
     this.loadIncidents();
   }
 
@@ -535,7 +555,10 @@ export class IncidentsComponent implements OnInit {
   }
 
   loadIncidents(): void {
-    const params = this.filterDecision() ? { notification_decision: this.filterDecision() } : {};
+    const params: any = this.filterDecision() ? { notification_decision: this.filterDecision() } : {};
+    if (this.projectId()) {
+      params.project_id = this.projectId();
+    }
     this.pdpToolsService.getIncidents(params).subscribe({
       next: (res: any) => {
         this.incidents.set(res.data || []);
@@ -589,7 +612,31 @@ export class IncidentsComponent implements OnInit {
   notifySpdp(): void { alert('Iniciando proceso de notificación a SPDP – Art. 39 Reglamento LOPDP'); }
   viewLegalBasis(): void { alert('Art. 39 del Reglamento a la LOPDP – Notificación de brechas de seguridad\nArt. 24 RGLOPDP – Notificación al titular'); }
   viewIncident(id: number): void { /* TODO */ }
-  exportIncidents(): void { alert('Exportando incidentes...'); }
+
+  exportIncidents(): void {
+    this.exporting.set(true);
+
+    const params: any = this.filterDecision() ? { notification_decision: this.filterDecision() } : {};
+    if (this.projectId()) {
+      params.project_id = this.projectId();
+    }
+
+    this.pdpToolsService.exportIncidents(params).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Incidentes_PDP_${new Date().toISOString().split('T')[0]}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exporting.set(false);
+      },
+      error: (err: any) => {
+        alert('Error al exportar: ' + (err.error?.message || err.message));
+        this.exporting.set(false);
+      }
+    });
+  }
 
   incidentsRequiringNotification(): number { return this.incidents().filter((i: any) => i.notification_decision === 'notificar').length; }
   totalIncidents(): number { return this.incidents().length; }

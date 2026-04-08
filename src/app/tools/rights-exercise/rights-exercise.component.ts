@@ -1,6 +1,7 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
 
 // Rights Exercise Component - Registro de Ejercicio de Derechos
@@ -11,8 +12,13 @@ import { PdpToolsService } from '../pdp-tools.service';
   template: `
     <div class="tools-container">
       <header class="tools-header">
-        <h1>📝 Registro de Ejercicio de Derechos</h1>
-        <p class="tools-subtitle">Matriz de seguimiento de solicitudes de ejercicio de derechos según LOPDP Ecuador</p>
+        <div class="header-title">
+          <h1>✋ Ejercicio de Derechos (ARCO)</h1>
+          @if (projectId()) {
+            <div class="project-badge">📁 Proyecto #{{ projectId() }}</div>
+          }
+        </div>
+        <p class="tools-subtitle">Seguimiento de solicitudes ARCO según Art. 17-22 LOPDP</p>
       </header>
 
       <!-- Form Header Info -->
@@ -125,7 +131,9 @@ import { PdpToolsService } from '../pdp-tools.service';
               <option value="respondida">Respondida</option>
               <option value="cerrada">Cerrada</option>
             </select>
-            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="exportRequests()">📥 Exportar</button>
+            <button class="vd-btn vd-btn-secondary vd-btn-sm" (click)="exportRequests()" [disabled]="exporting()">
+              {{ exporting() ? '⏳ Exportando...' : '📥 Exportar' }}
+            </button>
           </div>
         </div>
 
@@ -219,7 +227,10 @@ import { PdpToolsService } from '../pdp-tools.service';
   styles: [`
     .tools-container { max-width: 1400px; margin: 0 auto; }
     .tools-header { margin-bottom: 1.5rem; }
-    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0 0 0.5rem; }
+    .header-title { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0; }
+    .project-badge { background: rgba(86,135,243,0.1); color: #5687f3; padding: 0.375rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 500; border: 1px solid rgba(86,135,243,0.2); }
+    .tools-subtitle { color: #64748b; font-size: 0.875rem; margin-top: 0.5rem; }
     .tools-subtitle { color: #64748b; font-size: 0.875rem; }
     .form-header-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
     .new-request-form { display: flex; flex-direction: column; gap: 1rem; }
@@ -255,6 +266,7 @@ import { PdpToolsService } from '../pdp-tools.service';
   `],
 })
 export class RightsExerciseComponent implements OnInit {
+  projectId = signal<number | null>(null);
   registryInfo = signal<any>({ code: '', version: '1.0', date: new Date().toISOString().split('T')[0], responsible: '' });
   requests = signal<any[]>([]);
   newRequest = signal<any>({
@@ -269,16 +281,25 @@ export class RightsExerciseComponent implements OnInit {
   });
   filterStatus = signal<string>('');
   loading = signal(false);
+  exporting = signal(false);
 
   private pdpToolsService = inject(PdpToolsService);
+  private route = inject(ActivatedRoute);
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const pid = params['project_id'];
+      if (pid) this.projectId.set(parseInt(pid, 10));
+    });
     this.loadRequests();
   }
 
   loadRequests(): void {
     this.loading.set(true);
-    const params = this.filterStatus() ? { status: this.filterStatus() } : {};
+    const params: any = this.filterStatus() ? { status: this.filterStatus() } : {};
+    if (this.projectId()) {
+      params.project_id = this.projectId();
+    }
 
     this.pdpToolsService.getRightsRequests(params).subscribe({
       next: (res: any) => {
@@ -396,7 +417,30 @@ export class RightsExerciseComponent implements OnInit {
   }
   requestsByRight(rightType: string): number { return this.requests().filter(r => r.right_type === rightType).length; }
 
-  exportRequests(): void { alert('Exportando solicitudes...'); }
+  exportRequests(): void {
+    this.exporting.set(true);
+
+    const params: any = this.filterStatus() ? { status: this.filterStatus() } : {};
+    if (this.projectId()) {
+      params.project_id = this.projectId();
+    }
+
+    this.pdpToolsService.exportRightsRequests(params).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Solicitudes_Derechos_${new Date().toISOString().split('T')[0]}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exporting.set(false);
+      },
+      error: (err: any) => {
+        alert('Error al exportar: ' + (err.error?.message || err.message));
+        this.exporting.set(false);
+      }
+    });
+  }
 
   updateNewRequest(field: string, value: any): void {
     this.newRequest.update(req => ({ ...req, [field]: value }));

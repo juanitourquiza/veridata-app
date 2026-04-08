@@ -120,6 +120,13 @@ export class PdpToolsService {
     return this.http.put(`${this.apiUrl}/tools/rights-requests/${id}`, data);
   }
 
+  exportRightsRequests(params?: any): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/tools/rights-requests/export`, {
+      params,
+      responseType: 'blob'
+    });
+  }
+
   // ========== Incidents ==========
   getIncidents(params?: any): Observable<any> {
     return this.http.get(`${this.apiUrl}/tools/incidents`, { params });
@@ -127,5 +134,38 @@ export class PdpToolsService {
 
   createIncident(data: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/tools/incidents`, data);
+  }
+
+  exportIncidents(params?: any): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/tools/incidents/export`, {
+      params,
+      responseType: 'blob'
+    });
+  }
+
+  // ========== Legitimacy Reports ==========
+  listLegitimacyReports(params?: any): Observable<any> {
+    return this.http.get(`${this.apiUrl}/tools/legitimacy-reports`, { params });
+  }
+
+  createLegitimacyReport(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/tools/legitimacy-reports`, data);
+  }
+
+  updateLegitimacyReport(id: number, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/tools/legitimacy-reports/${id}`, data);
+  }
+
+  downloadLegitimacyReport(id: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/tools/legitimacy-reports/${id}/download`, {
+      responseType: 'blob'
+    });
+  }
+
+  exportLegitimacyReports(params?: any): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/tools/legitimacy-reports/export`, {
+      params,
+      responseType: 'blob'
+    });
   }
 }

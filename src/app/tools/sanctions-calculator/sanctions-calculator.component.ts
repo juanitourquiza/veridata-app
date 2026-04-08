@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 interface Infraccion {
   codigo: string;
@@ -10,7 +11,7 @@ interface Infraccion {
 }
 
 interface TipoInfraccion {
-  tipo: 'leve' | 'grave' | 'gravisima';
+  tipo: 'leve' | 'grave';
   label: string;
   rango: string;
   infracciones: Infraccion[];
@@ -21,10 +22,15 @@ interface TipoInfraccion {
   imports: [CommonModule, FormsModule],
   template: `
     <div class="tools-container">
-      <header class="tools-header">
-        <h1>💰 Calculadora de Sanciones LOPDP</h1>
-        <p class="tools-subtitle">Simulador basado en la metodología de la SPDP Ecuador (ecijagpa.tech)</p>
-      </header>
+      <div class="calc-header">
+        <div class="header-title">
+          <h1>💰 Calculadora de Sanciones</h1>
+          @if (projectId()) {
+            <div class="project-badge">📁 Proyecto #{{ projectId() }}</div>
+          }
+        </div>
+        <p class="subtitle">Estimación según Art. 67 y 68 LOPDP</p>
+      </div>
 
       <div class="progress-bar">
         @for (s of [1,2,3,4]; track s) {
@@ -41,7 +47,7 @@ interface TipoInfraccion {
           <p class="step-desc">Seleccione la categoría según el Art. 67 de la LOPDP</p>
           <div class="tipo-grid">
             @for (tipo of tiposInfraccion; track tipo.tipo) {
-              <div class="tipo-card" [class.selected]="selectedTipo()?.tipo === tipo.tipo" [class]="'tipo-' + tipo.tipo" (click)="selectTipo(tipo)">
+              <div class="tipo-card" [class.selected]="selectedTipo()?.tipo === tipo.tipo" [class]="'tipo-' + tipo.tipo" (click)="selectTipo(tipo)" [style.grid-column]="tipo.tipo === 'grave' ? 'span 1' : ''">
                 <div class="tipo-header">
                   <span class="tipo-badge" [class]="'badge-' + tipo.tipo">{{ tipo.label }}</span>
                   <span class="tipo-rango">{{ tipo.rango }}</span>
@@ -210,8 +216,10 @@ interface TipoInfraccion {
   `,
   styles: [`
     .tools-container { max-width: 900px; margin: 0 auto; }
-    .tools-header { margin-bottom: 1.5rem; text-align: center; }
-    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0 0 0.5rem; }
+    .calc-header { text-align: center; margin-bottom: 2rem; }
+    .header-title { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+    .calc-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0; }
+    .project-badge { background: rgba(86,135,243,0.1); color: #5687f3; padding: 0.375rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 500; border: 1px solid rgba(86,135,243,0.2); }
     .tools-subtitle { color: #64748b; font-size: 0.875rem; }
     .progress-bar { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem; }
     .progress-step { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; opacity: 0.4; }
@@ -224,18 +232,16 @@ interface TipoInfraccion {
     .step-card h3 { text-align: center; font-size: 1.25rem; margin-bottom: 0.5rem; }
     .step-desc { text-align: center; color: #64748b; font-size: 0.875rem; margin-bottom: 1.5rem; }
     .step-nav { display: flex; justify-content: space-between; margin-top: 2rem; }
-    .tipo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .tipo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
     .tipo-card { padding: 1.25rem; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
     .tipo-card:hover { border-color: #cbd5e0; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     .tipo-card.selected { border-color: #5687f3; background: rgba(86,135,243,0.05); }
     .tipo-card.tipo-leve.selected { border-color: #22c55e; background: rgba(34,197,94,0.05); }
     .tipo-card.tipo-grave.selected { border-color: #f59e0b; background: rgba(245,158,11,0.05); }
-    .tipo-card.tipo-gravisima.selected { border-color: #ef4444; background: rgba(239,68,68,0.05); }
     .tipo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
     .tipo-badge { font-size: 0.625rem; font-weight: 700; padding: 0.25rem 0.5rem; border-radius: 4px; text-transform: uppercase; }
     .badge-leve { background: rgba(34,197,94,0.1); color: #16a34a; }
     .badge-grave { background: rgba(245,158,11,0.1); color: #d97706; }
-    .badge-gravisima { background: rgba(239,68,68,0.1); color: #dc2626; }
     .tipo-rango { font-size: 0.75rem; color: #64748b; }
     .tipo-desc { margin: 0; font-size: 0.75rem; color: #64748b; line-height: 1.4; }
     .selected-tipo-info { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 8px; }
@@ -275,7 +281,6 @@ interface TipoInfraccion {
     .result-card { border-left: 4px solid #5687f3; }
     .result-card.result-leve { border-left-color: #22c55e; }
     .result-card.result-grave { border-left-color: #f59e0b; }
-    .result-card.result-gravisima { border-left-color: #dc2626; }
     .result-infraccion { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0; }
     .infraccion-codigo-large { font-size: 1.25rem; font-weight: 700; font-family: monospace; color: #0f172a; background: #f1f5f9; padding: 0.5rem 0.75rem; border-radius: 6px; }
     .result-summary { margin-bottom: 1.5rem; }
@@ -291,12 +296,10 @@ interface TipoInfraccion {
     .resultado-final { text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #f8fafc, #edf2f7); border-radius: 12px; margin-bottom: 1.5rem; }
     .resultado-final.final-leve { background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.05)); }
     .resultado-final.final-grave { background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.05)); }
-    .resultado-final.final-gravisima { background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.05)); }
     .final-label { font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem; }
     .final-amount { font-size: 2.5rem; font-weight: 800; color: #5687f3; margin-bottom: 0.5rem; }
     .final-leve .final-amount { color: #16a34a; }
     .final-grave .final-amount { color: #d97706; }
-    .final-gravisima .final-amount { color: #dc2626; }
     .final-rango { font-size: 0.75rem; color: #94a3b8; }
     .range-visual { margin-bottom: 1.5rem; }
     .range-bar { height: 12px; background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444); border-radius: 6px; position: relative; }
@@ -318,8 +321,18 @@ interface TipoInfraccion {
     }
   `],
 })
-export class SanctionsCalculatorComponent {
+export class SanctionsCalculatorComponent implements OnInit {
+  projectId = signal<number | null>(null);
   step = signal(1);
+
+  private route = inject(ActivatedRoute);
+
+  ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const pid = params['project_id'];
+      if (pid) this.projectId.set(parseInt(pid, 10));
+    });
+  }
   selectedTipo = signal<TipoInfraccion | null>(null);
   selectedInfraccion = signal<Infraccion | null>(null);
   vdn = signal<number>(0);
@@ -336,74 +349,67 @@ export class SanctionsCalculatorComponent {
     {
       tipo: 'leve',
       label: 'Leve',
-      rango: '0.1% - 0.7% VDN',
+      rango: '0.5% - 1.5% VDN',
       infracciones: [
-        { codigo: '67.1.a', descripcion: 'No responder solicitud de ejercicio de derechos en plazo', rangoMin: 0.1, rangoMax: 0.7 },
-        { codigo: '67.1.b', descripcion: 'No mantener política de protección de datos publicada', rangoMin: 0.1, rangoMax: 0.7 },
-        { codigo: '67.1.c', descripcion: 'No implementar privacidad desde el diseño', rangoMin: 0.1, rangoMax: 0.7 },
-        { codigo: '67.1.d', descripcion: 'Contratar proveedor sin garantías', rangoMin: 0.1, rangoMax: 0.7 },
-        { codigo: '67.1.e', descripcion: 'No cumplir orden de corrección leve', rangoMin: 0.1, rangoMax: 0.7 },
+        { codigo: '67.1.a', descripcion: 'No proporcionar información al titular sobre el tratamiento de sus datos personales', rangoMin: 0.5, rangoMax: 1.5 },
+        { codigo: '67.1.b', descripcion: 'No responder solicitudes de ejercicio de derechos en el plazo establecido', rangoMin: 0.5, rangoMax: 1.5 },
+        { codigo: '67.1.c', descripcion: 'No mantener actualizado el registro de actividades de tratamiento', rangoMin: 0.5, rangoMax: 1.5 },
+        { codigo: '67.1.d', descripcion: 'No mantener disponible y publicada la política de protección de datos', rangoMin: 0.5, rangoMax: 1.5 },
+        { codigo: '67.1.e', descripcion: 'No aplicar las medidas de seguridad establecidas en la normativa', rangoMin: 0.5, rangoMax: 1.5 },
+        { codigo: '67.1.f', descripcion: 'No implementar la privacidad desde el diseño por defecto', rangoMin: 0.5, rangoMax: 1.5 },
+        { codigo: '67.1.g', descripcion: 'No formalizar la relación con encargados mediante contrato o acto jurídico equivalente', rangoMin: 0.5, rangoMax: 1.5 },
+        { codigo: '67.1.h', descripcion: 'No realizar evaluaciones de impacto en la protección de datos cuando sea obligatorio', rangoMin: 0.5, rangoMax: 1.5 },
+        { codigo: '67.1.i', descripcion: 'No designar delegado de protección de datos cuando sea obligatorio', rangoMin: 0.5, rangoMax: 1.5 },
+        { codigo: '67.1.j', descripcion: 'No notificar a la autoridad las brechas de seguridad en el plazo establecido', rangoMin: 0.5, rangoMax: 1.5 },
+        { codigo: '67.1.k', descripcion: 'No informar a los titulares sobre las brechas de seguridad cuando corresponda', rangoMin: 0.5, rangoMax: 1.5 },
       ]
     },
     {
       tipo: 'grave',
       label: 'Grave',
-      rango: '0.7% - 1% VDN',
+      rango: '1.5% - 4% VDN',
       infracciones: [
-        { codigo: '67.2.a', descripcion: 'Tratamiento ilícito de datos personales', rangoMin: 0.7, rangoMax: 1.0 },
-        { codigo: '67.2.b', descripcion: 'No adoptar medidas de seguridad', rangoMin: 0.7, rangoMax: 1.0 },
-        { codigo: '67.2.c', descripcion: 'Transferencia internacional sin garantías', rangoMin: 0.7, rangoMax: 1.0 },
-        { codigo: '67.2.d', descripcion: 'No realizar evaluación de impacto', rangoMin: 0.7, rangoMax: 1.0 },
-        { codigo: '67.2.e', descripcion: 'Contratar encargado sin contrato', rangoMin: 0.7, rangoMax: 1.0 },
-        { codigo: '67.2.f', descripcion: 'Obstaculizar actuación de la autoridad', rangoMin: 0.7, rangoMax: 1.0 },
-        { codigo: '67.2.g', descripcion: 'No notificar brecha a la autoridad', rangoMin: 0.7, rangoMax: 1.0 },
-        { codigo: '67.2.h', descripcion: 'No notificar brecha a titulares', rangoMin: 0.7, rangoMax: 1.0 },
-        { codigo: '67.2.i', descripcion: 'No designar DPO obligatorio', rangoMin: 0.7, rangoMax: 1.0 },
-        { codigo: '67.2.j', descripcion: 'Reincidencia en infracciones leves', rangoMin: 0.7, rangoMax: 1.0 },
-      ]
-    },
-    {
-      tipo: 'gravisima',
-      label: 'Gravísima',
-      rango: '1% - 4% VDN',
-      infracciones: [
-        { codigo: '67.3.a', descripcion: 'Tratamiento ilícito masivo de datos sensibles', rangoMin: 1.0, rangoMax: 4.0 },
-        { codigo: '67.3.b', descripcion: 'Tratamiento ilícito masivo de datos de menores', rangoMin: 1.0, rangoMax: 4.0 },
-        { codigo: '67.3.c', descripcion: 'Uso de datos para fines discriminatorios', rangoMin: 1.0, rangoMax: 4.0 },
-        { codigo: '67.3.d', descripcion: 'Venta de datos sin consentimiento', rangoMin: 1.0, rangoMax: 4.0 },
-        { codigo: '67.3.e', descripcion: 'Reincidencia en infracciones graves', rangoMin: 1.0, rangoMax: 4.0 },
-        { codigo: '67.3.f', descripcion: 'Obstaculización grave de la autoridad', rangoMin: 1.0, rangoMax: 4.0 },
+        { codigo: '67.2.a', descripcion: 'Tratamiento ilícito de datos personales sin base legal válida', rangoMin: 1.5, rangoMax: 4.0 },
+        { codigo: '67.2.b', descripcion: 'Tratamiento ilícito de datos sensibles sin autorización de la autoridad', rangoMin: 1.5, rangoMax: 4.0 },
+        { codigo: '67.2.c', descripcion: 'Tratamiento ilícito de datos personales de niñas, niños o adolescentes', rangoMin: 1.5, rangoMax: 4.0 },
+        { codigo: '67.2.d', descripcion: 'Transferencia internacional de datos sin garantías de protección adecuadas', rangoMin: 1.5, rangoMax: 4.0 },
+        { codigo: '67.2.e', descripcion: 'Uso de datos personales para fines discriminatorios o ilegales', rangoMin: 1.5, rangoMax: 4.0 },
+        { codigo: '67.2.f', descripcion: 'Venta de datos personales sin consentimiento expreso del titular', rangoMin: 1.5, rangoMax: 4.0 },
+        { codigo: '67.2.g', descripcion: 'Obstaculización de las facultades de inspección o investigación de la autoridad', rangoMin: 1.5, rangoMax: 4.0 },
+        { codigo: '67.2.h', descripcion: 'No adoptar medidas de seguridad que resulten en vulneración grave de datos', rangoMin: 1.5, rangoMax: 4.0 },
+        { codigo: '67.2.i', descripcion: 'Reincidencia en infracciones leves sancionadas previamente', rangoMin: 1.5, rangoMax: 4.0 },
+        { codigo: '67.2.j', descripcion: 'Mantenimiento de datos personales después de cumplido el plazo de conservación sin causa justificada', rangoMin: 1.5, rangoMax: 4.0 },
       ]
     }
   ];
 
   factoresAtenuantes = [
-    { id: 'at1', descripcion: 'Cumplimiento de medidas de seguridad', impacto: 15, selected: false },
-    { id: 'at2', descripcion: 'Cooperación con la autoridad', impacto: 20, selected: false },
-    { id: 'at3', descripcion: 'Medidas correctivas inmediatas', impacto: 15, selected: false },
-    { id: 'at4', descripcion: 'Buena fe del infractor', impacto: 10, selected: false },
-    { id: 'at5', descripcion: 'Sin beneficio económico', impacto: 10, selected: false },
-    { id: 'at6', descripcion: 'Registro de actividades', impacto: 10, selected: false },
-    { id: 'at7', descripcion: 'Evaluación de riesgos', impacto: 10, selected: false },
+    { id: 'at1', descripcion: 'Cumplimiento de medidas de seguridad apropiadas (Art. 68.1.a)', impacto: 15, selected: false },
+    { id: 'at2', descripcion: 'Cooperación activa con la autoridad (Art. 68.1.b)', impacto: 20, selected: false },
+    { id: 'at3', descripcion: 'Adopción de medidas correctivas inmediatas (Art. 68.1.c)', impacto: 15, selected: false },
+    { id: 'at4', descripcion: 'Buena fe del infractor y ausencia de dolo (Art. 68.1.d)', impacto: 10, selected: false },
+    { id: 'at5', descripcion: 'Ausencia de beneficio económico indebido (Art. 68.1.e)', impacto: 10, selected: false },
+    { id: 'at6', descripcion: 'Tamaño reducido de la organización (Art. 68.1.f)', impacto: 10, selected: false },
+    { id: 'at7', descripcion: 'Cumplimiento previo de obligaciones de transparencia (Art. 68.1.g)', impacto: 10, selected: false },
   ];
 
   factoresAgravantes = [
-    { id: 'ag1', descripcion: 'Beneficio económico de la infracción', impacto: 25, selected: false },
-    { id: 'ag2', descripcion: 'Reincidencia', impacto: 30, selected: false },
-    { id: 'ag3', descripcion: 'Duración prolongada', impacto: 15, selected: false },
-    { id: 'ag4', descripcion: 'Muchos titulares afectados', impacto: 20, selected: false },
-    { id: 'ag5', descripcion: 'Datos sensibles/menores afectados', impacto: 25, selected: false },
-    { id: 'ag6', descripcion: 'Mala fe o intencionalidad', impacto: 20, selected: false },
-    { id: 'ag7', descripcion: 'Obstaculización investigación', impacto: 20, selected: false },
-    { id: 'ag8', descripcion: 'Posición dominante', impacto: 15, selected: false },
+    { id: 'ag1', descripcion: 'Beneficio económico derivado de la infracción (Art. 68.2.a)', impacto: 25, selected: false },
+    { id: 'ag2', descripcion: 'Reincidencia en infracciones similares (Art. 68.2.b)', impacto: 30, selected: false },
+    { id: 'ag3', descripcion: 'Duración prolongada de la infracción (Art. 68.2.c)', impacto: 15, selected: false },
+    { id: 'ag4', descripcion: 'Gran número de titulares afectados (Art. 68.2.d)', impacto: 20, selected: false },
+    { id: 'ag5', descripcion: 'Afectación de datos sensibles o de menores (Art. 68.2.e)', impacto: 25, selected: false },
+    { id: 'ag6', descripcion: 'Mala fe o intencionalidad en la conducta (Art. 68.2.f)', impacto: 20, selected: false },
+    { id: 'ag7', descripcion: 'Obstaculización de la investigación (Art. 68.2.g)', impacto: 20, selected: false },
+    { id: 'ag8', descripcion: 'Posición dominante en el mercado (Art. 68.2.h)', impacto: 15, selected: false },
   ];
 
   capacidades = [
-    { id: 'cap1', label: 'Microempresa (<50 trabajadores)', impacto: -20 },
-    { id: 'cap2', label: 'Pequeña empresa (50-100)', impacto: -10 },
-    { id: 'cap3', label: 'Mediana empresa (100-200)', impacto: 0 },
-    { id: 'cap4', label: 'Gran empresa (>200)', impacto: 10 },
-    { id: 'cap5', label: 'Posición dominante', impacto: 20 },
+    { id: 'cap1', label: 'Microempresa (<50 trabajadores, <USD 1M)', impacto: -20 },
+    { id: 'cap2', label: 'Pequeña empresa (50-100 trabajadores)', impacto: -10 },
+    { id: 'cap3', label: 'Mediana empresa (100-200 trabajadores)', impacto: 0 },
+    { id: 'cap4', label: 'Gran empresa (>200 trabajadores, >USD 5M)', impacto: 10 },
+    { id: 'cap5', label: 'Posición dominante en el mercado', impacto: 20 },
   ];
 
   selectTipo(tipo: TipoInfraccion): void {
@@ -417,9 +423,8 @@ export class SanctionsCalculatorComponent {
 
   getTipoDescripcion(tipo: string): string {
     const descs: Record<string, string> = {
-      leve: 'Infracciones sin afectación grave a derechos.',
-      grave: 'Infracciones que afectan derechos fundamentales.',
-      gravisima: 'Infracciones masivas o con afectación grave.'
+      leve: 'Infracciones formales o de carácter leve.',
+      grave: 'Infracciones que vulneran derechos fundamentales a la protección de datos.'
     };
     return descs[tipo] || '';
   }

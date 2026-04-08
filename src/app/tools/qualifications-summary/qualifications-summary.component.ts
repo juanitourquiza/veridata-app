@@ -1,6 +1,7 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
 
 // Qualifications Summary Component - Resumen de Calificaciones (Dashboard)
@@ -11,8 +12,13 @@ import { PdpToolsService } from '../pdp-tools.service';
   template: `
     <div class="tools-container">
       <header class="tools-header">
-        <h1>📊 Resumen de Calificaciones</h1>
-        <p class="tools-subtitle">Dashboard consolidado de calificaciones de proveedores, encargados y transferencias internacionales</p>
+        <div class="header-title">
+          <h1>📊 Resumen de Calificaciones</h1>
+          @if (projectId()) {
+            <div class="project-badge">📁 Proyecto #{{ projectId() }}</div>
+          }
+        </div>
+        <p class="tools-subtitle">Dashboard consolidado de habilitaciones</p>
       </header>
 
       @if (loading()) {
@@ -190,7 +196,9 @@ import { PdpToolsService } from '../pdp-tools.service';
   styles: [`
     .tools-container { max-width: 1400px; margin: 0 auto; }
     .tools-header { margin-bottom: 1.5rem; }
-    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0 0 0.5rem; }
+    .header-title { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .tools-header h1 { font-size: 1.75rem; color: #0f172a; margin: 0; }
+    .project-badge { background: rgba(86,135,243,0.1); color: #5687f3; padding: 0.375rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 500; border: 1px solid rgba(86,135,243,0.2); }
     .tools-subtitle { color: #64748b; font-size: 0.875rem; }
     .loading-state { padding: 3rem; text-align: center; color: #94a3b8; }
     .empty-state { padding: 2rem; text-align: center; color: #94a3b8; font-size: 0.875rem; }
@@ -239,11 +247,13 @@ import { PdpToolsService } from '../pdp-tools.service';
   `],
 })
 export class QualificationsSummaryComponent implements OnInit {
+  projectId = signal<number | null>(null);
   officerQualifications = signal<any[]>([]);
   transferQualifications = signal<any[]>([]);
   loading = signal(true);
 
   private pdpToolsService = inject(PdpToolsService);
+  private route = inject(ActivatedRoute);
 
   private dataTypeLabels: Record<string, string> = {
     identificativos: 'Identificativos',
@@ -261,6 +271,10 @@ export class QualificationsSummaryComponent implements OnInit {
   };
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const pid = params['project_id'];
+      if (pid) this.projectId.set(parseInt(pid, 10));
+    });
     this.loadData();
   }
 
@@ -269,24 +283,31 @@ export class QualificationsSummaryComponent implements OnInit {
     let loaded = 0;
     const checkDone = () => { if (++loaded >= 2) this.loading.set(false); };
 
-    this.pdpToolsService.getOfficerQualifications({ per_page: 100 }).subscribe({
+    const params: any = { per_page: 100 };
+    if (this.projectId()) {
+      params.project_id = this.projectId();
+    }
+
+    this.pdpToolsService.getOfficerQualifications(params).subscribe({
       next: (res: any) => {
         this.officerQualifications.set(res.data || []);
         checkDone();
       },
       error: (err) => {
         console.error('Error loading officer qualifications:', err);
+        this.officerQualifications.set([]);
         checkDone();
       }
     });
 
-    this.pdpToolsService.getTransferQualifications({ per_page: 100 }).subscribe({
+    this.pdpToolsService.getTransferQualifications(params).subscribe({
       next: (res: any) => {
         this.transferQualifications.set(res.data || []);
         checkDone();
       },
       error: (err) => {
         console.error('Error loading transfer qualifications:', err);
+        this.transferQualifications.set([]);
         checkDone();
       }
     });

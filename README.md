@@ -1,4 +1,4 @@
-# Veridata App — v2.2.0
+# Veridata App — v2.3.0
 
 Plataforma de evaluación de cumplimiento de protección de datos personales (LOPDP Ecuador).
 
@@ -22,6 +22,24 @@ ng build --configuration=production
 ```
 
 Los archivos se generan en `dist/veridata-app/browser/`.
+
+## Changelog v2.3.0 (Abril 2026)
+
+### 🆕 Informes de Legitimación (Resolución 041)
+- **Nuevo módulo completo**: Informe de Evaluación de Ponderación del Interés Legítimo
+- 11 secciones según Res. SPDP-SPD-2025-0041-R (Anexo I)
+- Formulario completo con validaciones y guardado
+- Descarga de informe Word profesional
+- Exportación Excel de listado
+
+### 📊 Calculadoras PDP Actualizadas
+- **Calculadora de Sanciones**: Modelo ECIJA GPA — 4 pasos, Art. 67/68 LOPDP
+- **Calculadora de Gran Escala**: Metodología MTGE corregida — 6 factores, umbral 8/13.5 pts, Art. 14 completo (8 casos)
+- **Incidentes**: 10 tipos actualizados según matriz oficial SPDP Ecuador
+
+### 🐛 Fixes Críticos
+- **Restauración del menú PDP**: Menú expandible de Herramientas y Registros PDP restaurado en sidebar
+- **Modelos separados**: Backend PSR-4 — 10 modelos individuales en lugar de archivo monolítico
 
 ## Changelog v2.2.0
 

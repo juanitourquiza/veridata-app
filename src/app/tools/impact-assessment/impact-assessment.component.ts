@@ -1,6 +1,7 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
 
 // Impact Assessment Component - Evaluación de Riesgos e Impacto
@@ -11,8 +12,13 @@ import { PdpToolsService } from '../pdp-tools.service';
   template: `
     <div class="tools-container">
       <header class="tools-header">
-        <h1>⚠️ Evaluación de Riesgos e Impacto</h1>
-        <p class="tools-subtitle">Análisis de riesgos y evaluación de impacto en protección de datos</p>
+        <div class="header-title">
+          <h1>⚠️ Evaluación de Riesgos e Impacto (DPIA)</h1>
+          @if (projectId()) {
+            <div class="project-badge">📁 Proyecto #{{ projectId() }}</div>
+          }
+        </div>
+        <p class="tools-subtitle">Evaluación sistemática de riesgos según Art. 20 LOPDP</p>
       </header>
 
       <div class="vd-card">
@@ -119,9 +125,11 @@ import { PdpToolsService } from '../pdp-tools.service';
     </div>
   `,
   styles: [`
-    .tools-container { max-width: 1200px; margin: 0 auto; }
+    .tools-container { max-width: 1400px; margin: 0 auto; padding: 1rem; }
     .tools-header { margin-bottom: 1.5rem; }
-    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0 0 0.5rem; }
+    .header-title { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .tools-header h1 { font-size: 1.5rem; color: #0f172a; margin: 0; }
+    .project-badge { background: rgba(86,135,243,0.1); color: #5687f3; padding: 0.375rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 500; border: 1px solid rgba(86,135,243,0.2); }
     .tools-subtitle { color: #64748b; font-size: 0.875rem; }
     .section-desc { color: #64748b; font-size: 0.875rem; margin: 0.5rem 0 1rem; }
     .eipd-form { display: flex; flex-direction: column; gap: 1.5rem; }
@@ -142,6 +150,7 @@ import { PdpToolsService } from '../pdp-tools.service';
   `],
 })
 export class ImpactAssessmentComponent implements OnInit {
+  projectId = signal<number | null>(null);
   assessment = signal<any>({
     name: '',
     data_nature: 'ordinarios',
@@ -154,9 +163,13 @@ export class ImpactAssessmentComponent implements OnInit {
   loading = signal(false);
 
   private pdpToolsService = inject(PdpToolsService);
+  private route = inject(ActivatedRoute);
 
   ngOnInit(): void {
-    this.addRisk(); // Add first risk row
+    this.route.queryParams.subscribe(params => {
+      const pid = params['project_id'];
+      if (pid) this.projectId.set(parseInt(pid, 10));
+    });
     this.loadHistory();
   }
 
@@ -198,7 +211,11 @@ export class ImpactAssessmentComponent implements OnInit {
   }
 
   loadHistory(): void {
-    this.pdpToolsService.getImpactAssessments().subscribe({
+    const params: any = {};
+    if (this.projectId()) {
+      params.project_id = this.projectId();
+    }
+    this.pdpToolsService.getImpactAssessments(params).subscribe({
       next: (res: any) => {
         this.assessmentHistory.set(res.data || []);
       },
