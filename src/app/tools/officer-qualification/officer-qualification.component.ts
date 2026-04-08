@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
+import { ModalService } from '../../shared/modal.service';
 
 // Officer Qualification Component - Calificación de Encargados del Tratamiento
 
@@ -337,6 +338,7 @@ export class OfficerQualificationComponent implements OnInit {
 
   private pdpToolsService = inject(PdpToolsService);
   private route = inject(ActivatedRoute);
+  private modal = inject(ModalService);
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
@@ -454,11 +456,11 @@ export class OfficerQualificationComponent implements OnInit {
   // Save & History
   saveQualification(): void {
     if (!this.provider().name || !this.provider().service) {
-      alert('Debe completar al menos el nombre del proveedor y servicio contratado.');
+      this.modal.warning('Campos requeridos', 'Debe completar al menos el nombre del proveedor y servicio contratado.');
       return;
     }
     if (!this.provider().data_types || this.provider().data_types.length === 0) {
-      alert('Debe seleccionar al menos un tipo de datos.');
+      this.modal.warning('Campos requeridos', 'Debe seleccionar al menos un tipo de datos.');
       return;
     }
 
@@ -493,12 +495,12 @@ export class OfficerQualificationComponent implements OnInit {
             score: typeof c.score === 'number' ? c.score : 0,
           })));
         }
-        alert('Calificación guardada exitosamente');
+        this.modal.success('Calificación guardada', 'La calificación del encargado se guardó exitosamente.');
         this.loadHistory();
         this.saving.set(false);
       },
       error: (err: any) => {
-        alert('Error al guardar: ' + (err.error?.message || err.message));
+        this.modal.error('Error al guardar', err.error?.message || err.message);
         this.saving.set(false);
       }
     });
@@ -539,14 +541,14 @@ export class OfficerQualificationComponent implements OnInit {
         // Recalculate to ensure UI is in sync
         this.recalculateAllScores();
       },
-      error: (err: any) => alert('Error al cargar: ' + (err.error?.message || err.message))
+      error: (err: any) => this.modal.error('Error al cargar', err.error?.message || err.message)
     });
   }
 
   generateReport(): void {
     const id = this.currentQualificationId();
     if (!id) {
-      alert('Debe guardar la calificación primero.');
+      this.modal.warning('Guardar primero', 'Debe guardar la calificación antes de generar el informe.');
       return;
     }
     this.generatingReport.set(true);
@@ -561,7 +563,7 @@ export class OfficerQualificationComponent implements OnInit {
         this.generatingReport.set(false);
       },
       error: (err: any) => {
-        alert('Error al generar informe: ' + (err.error?.message || err.message));
+        this.modal.error('Error al generar informe', err.error?.message || err.message);
         this.generatingReport.set(false);
       }
     });
@@ -577,7 +579,7 @@ export class OfficerQualificationComponent implements OnInit {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: (err: any) => alert('Error al generar informe: ' + (err.error?.message || err.message))
+      error: (err: any) => this.modal.error('Error al generar informe', err.error?.message || err.message)
     });
   }
 

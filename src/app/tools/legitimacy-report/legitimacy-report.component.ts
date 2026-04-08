@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
+import { ModalService } from '../../shared/modal.service';
 import { HttpResponse } from '@angular/common/http';
 
 // Legitimacy Report Component - Informe de Legitimación (Resolución 041)
@@ -895,12 +896,12 @@ export class LegitimacyReportComponent implements OnInit {
     this.pdpToolsService.createLegitimacyReport({ ...data, ...params }).subscribe({
       next: () => {
         this.saving.set(false);
-        alert('Informe guardado correctamente');
+        this.modalService.success('Éxito', 'Informe guardado correctamente');
         this.loadSavedReports();
       },
       error: (err) => {
         this.saving.set(false);
-        alert('Error al guardar: ' + (err.error?.message || err.message));
+        this.modalService.error('Error', 'Error al guardar: ' + (err.error?.message || err.message));
       }
     });
   }
@@ -920,7 +921,7 @@ export class LegitimacyReportComponent implements OnInit {
         window.URL.revokeObjectURL(url);
       },
       error: () => {
-        alert('Error al descargar el informe');
+        this.modalService.error('Error', 'Error al descargar el informe');
       }
     });
   }
@@ -939,7 +940,7 @@ export class LegitimacyReportComponent implements OnInit {
       },
       error: (err) => {
         this.saving.set(false);
-        alert('Error al generar: ' + (err.error?.message || err.message));
+        this.modalService.error('Error', 'Error al generar: ' + (err.error?.message || err.message));
       }
     });
   }
@@ -956,7 +957,7 @@ export class LegitimacyReportComponent implements OnInit {
         window.URL.revokeObjectURL(url);
       },
       error: () => {
-        alert('Error al exportar');
+        this.modalService.error('Error', 'Error al exportar');
       }
     });
   }
@@ -987,5 +988,6 @@ export class LegitimacyReportComponent implements OnInit {
   }
 
   private pdpToolsService = inject(PdpToolsService);
+  private modalService = inject(ModalService);
   private route = inject(ActivatedRoute);
 }

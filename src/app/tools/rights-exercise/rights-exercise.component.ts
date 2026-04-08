@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
+import { ModalService } from '../../shared/modal.service';
 
 // Rights Exercise Component - Registro de Ejercicio de Derechos
 
@@ -285,6 +286,7 @@ export class RightsExerciseComponent implements OnInit {
 
   private pdpToolsService = inject(PdpToolsService);
   private route = inject(ActivatedRoute);
+  private modal = inject(ModalService);
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
@@ -355,19 +357,20 @@ export class RightsExerciseComponent implements OnInit {
       requires_clarification: this.newRequest().requires_clarification
     }).subscribe({
       next: () => {
-        alert('Solicitud registrada');
+        this.modal.success('Solicitud registrada', 'La solicitud de ejercicio de derechos se registró correctamente.');
         this.loadRequests();
         this.newRequest.set({ received_date: '', channel: '', requester_type: '', requester_name: '', right_type: '', responsible_area: '', requires_clarification: false, description: '' });
       },
       error: (err: any) => {
         const msg = err.error?.message || err.error?.errors ? JSON.stringify(err.error?.errors) : err.message;
-        alert('Error al guardar: ' + msg);
+        this.modal.error('Error al guardar', msg);
       }
     });
   }
 
-  deleteRequest(id: number): void {
-    if (confirm('¿Eliminar esta solicitud?')) {
+  async deleteRequest(id: number): Promise<void> {
+    const confirmed = await this.modal.confirm('¿Eliminar solicitud?', 'Esta acción no se puede deshacer.');
+    if (confirmed) {
       this.requests.update(reqs => reqs.filter(r => r.id !== id));
     }
   }
@@ -389,7 +392,7 @@ export class RightsExerciseComponent implements OnInit {
       next: () => {
         // Status updated
       },
-      error: (err: any) => alert('Error al actualizar: ' + err.message)
+      error: (err: any) => this.modal.error('Error al actualizar', err.message)
     });
   }
 
@@ -436,7 +439,7 @@ export class RightsExerciseComponent implements OnInit {
         this.exporting.set(false);
       },
       error: (err: any) => {
-        alert('Error al exportar: ' + (err.error?.message || err.message));
+        this.modal.error('Error al exportar', err.error?.message || err.message);
         this.exporting.set(false);
       }
     });

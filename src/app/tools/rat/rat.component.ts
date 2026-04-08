@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
+import { ModalService } from '../../shared/modal.service';
 
 // RAT Component - Registro de Actividades de Tratamiento
 // Supports manual entry, PDF upload, and transcript processing
@@ -166,6 +167,7 @@ export class RatComponent implements OnInit {
   ratInfo = signal<any>({ name: '', code: '', version: '1.0', area: '' });
 
   private pdpToolsService = inject(PdpToolsService);
+  private modalService = inject(ModalService);
   private route = inject(ActivatedRoute);
 
   ngOnInit(): void {
@@ -271,12 +273,12 @@ export class RatComponent implements OnInit {
                 risk_level: 'baja'
               }]);
             });
-            alert(`Se han extraído ${res.activities.length} actividades de la transcripción.`);
+            this.modalService.success('Extracción completada', `Se han extraído ${res.activities.length} actividades de la transcripción.`);
           }
         },
         error: () => {
           this.processing.set(false);
-          alert('Error al procesar la transcripción.');
+          this.modalService.error('Error', 'Error al procesar la transcripción.');
         }
       });
     }
@@ -290,10 +292,10 @@ export class RatComponent implements OnInit {
 
     this.pdpToolsService.createRatRecord(ratData).subscribe({
       next: () => {
-        alert('RAT guardado correctamente');
+        this.modalService.success('Éxito', 'RAT guardado correctamente');
         this.loadRatHistory();
       },
-      error: (err) => alert('Error al guardar el RAT: ' + err.message)
+      error: (err) => this.modalService.error('Error', 'Error al guardar el RAT: ' + err.message)
     });
   }
 
@@ -308,7 +310,7 @@ export class RatComponent implements OnInit {
         });
         this.activities.set(res.activities || []);
       },
-      error: (err) => alert('Error al cargar versión: ' + err.message)
+      error: (err) => this.modalService.error('Error', 'Error al cargar versión: ' + err.message)
     });
   }
 

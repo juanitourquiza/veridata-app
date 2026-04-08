@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ModalService } from '../../shared/modal.service';
 import { Project } from '../../core/models/models';
 
 @Component({
@@ -146,8 +147,23 @@ export class ProjectListComponent implements OnInit {
   snapshots = signal<{ id: number; name: string; snapshot_date: string; global_maturity: number; notes?: string }[]>([]);
   saving = signal(false);
 
-  constructor(private api: ApiService, public auth: AuthService) { }
-  ngOnInit(): void { this.api.getProjects().subscribe({ next: (res) => { this.projects.set(res.data); this.loading.set(false); }, error: () => this.loading.set(false) }); }
+  constructor(private api = inject(ApiService), public auth = inject(AuthService), private modalService = inject(ModalService)) { }
+
+  ngOnInit(): void {
+    this.loadProjects();
+  }
+
+  loadProjects(): void {
+    this.api.getProjects().subscribe({
+      next: (p: Project[]) => this.projects.set(p),
+      error: (err: any) => {
+        this.modalService.error('Error', 'Error al cargar proyectos: ' + err.message);
+        this.loading.set(false);
+      },
+      complete: () => this.loading.set(false)
+    });
+  }
+
   statusBadge(status: string): string {
     const map: Record<string, string> = {
       'draft': 'alto',
@@ -193,7 +209,7 @@ export class ProjectListComponent implements OnInit {
 
   saveSnapshot(name: string, notes?: string): void {
     if (!name.trim()) {
-      alert('Por favor ingresa un nombre para la evaluación.');
+      this.modalService.error('Error', 'Por favor ingresa un nombre para la evaluación.');
       return;
     }
     const projectId = this.selectedProject()?.id;
@@ -206,9 +222,9 @@ export class ProjectListComponent implements OnInit {
         this.showSaveDialog.set(false);
         this.loadSnapshots(projectId);
       },
-      error: () => {
+      error: (err: any) => {
         this.saving.set(false);
-        alert('Error al guardar la evaluación.');
+        this.modalService.error('Error', 'Error al guardar la evaluación: ' + err.message);
       }
     });
   }
@@ -220,14 +236,14 @@ export class ProjectListComponent implements OnInit {
 
     this.api.restoreEvaluationSnapshot(projectId, snapshotId).subscribe({
       next: () => {
-        alert('Evaluación restaurada exitosamente. Actualizando...');
+        this.modalService.success('Éxito', 'Evaluación restaurada correctamente');
         this.loadSnapshots(projectId);
         // Reload projects to update maturity
         this.api.getProjects().subscribe({
           next: (res) => { this.projects.set(res.data); }
         });
       },
-      error: () => alert('Error al restaurar la evaluación.')
+      error: (err: any) => this.modalService.error('Error', 'Error al restaurar la evaluación: ' + err.message)
     });
   }
 

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
+import { ModalService } from '../../shared/modal.service';
 
 // Impact Assessment Component - Evaluación de Riesgos e Impacto
 
@@ -163,6 +164,7 @@ export class ImpactAssessmentComponent implements OnInit {
   loading = signal(false);
 
   private pdpToolsService = inject(PdpToolsService);
+  private modalService = inject(ModalService);
   private route = inject(ActivatedRoute);
 
   ngOnInit(): void {
@@ -188,7 +190,7 @@ export class ImpactAssessmentComponent implements OnInit {
   }
 
   generateEIPD(): void {
-    alert('Generando documento EIPD... (integración con PDF próximamente)');
+    this.modalService.info('DPIA', 'Generando documento EIPD... (integración con PDF próximamente)');
   }
 
   saveAssessment(): void {
@@ -203,10 +205,10 @@ export class ImpactAssessmentComponent implements OnInit {
 
     this.pdpToolsService.createImpactAssessment(data).subscribe({
       next: () => {
-        alert('Evaluación guardada correctamente');
+        this.modalService.success('Éxito', 'Evaluación guardada correctamente');
         this.loadHistory();
       },
-      error: (err: any) => alert('Error al guardar: ' + err.message)
+      error: (err: any) => this.modalService.error('Error', 'Error al guardar: ' + err.message)
     });
   }
 
@@ -235,7 +237,7 @@ export class ImpactAssessmentComponent implements OnInit {
           risks: res.risks || []
         });
       },
-      error: (err: any) => alert('Error al cargar evaluación: ' + err.message)
+      error: (err: any) => this.modalService.error('Error', 'Error al cargar evaluación: ' + err.message)
     });
   }
 

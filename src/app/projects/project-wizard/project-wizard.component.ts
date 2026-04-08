@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import {
   Project, Framework, ControlDomain, Control, Evaluation, Gap, ActionItem, ExecutiveReport, DomainMaturity, Deliverable, DeliverableVersion, User
 } from '../../core/models/models';
+import { ModalService } from '../../shared/modal.service';
 
 @Component({
   selector: 'app-project-wizard',
@@ -1275,7 +1276,7 @@ export class ProjectWizardComponent implements OnInit {
   evaluationProgress = computed(() => this.totalControls() ? (this.evaluatedCount() / this.totalControls()) * 100 : 0);
   globalMaturityPercent = computed(() => (this.globalMaturity() / 5) * 100); // Convertir escala 0-5 a 0-100%
 
-  constructor(private api: ApiService, private auth: AuthService, private route: ActivatedRoute, private router: Router) { }
+  constructor(private api: ApiService, private auth: AuthService, private route: ActivatedRoute, private router: Router, private modal: ModalService) { }
 
   ngOnInit(): void {
     this.api.getFrameworks().subscribe({ next: (f: Framework[]) => this.frameworks.set(f) });
@@ -1462,9 +1463,9 @@ export class ProjectWizardComponent implements OnInit {
       error: (err) => {
         this.generatingReport.set(false);
         if (err.status === 429) {
-          alert('Has alcanzado el límite de generación de reportes. Por favor espera un momento e intenta de nuevo.');
+          this.modal.warning('Límite alcanzado', 'Has alcanzado el límite de generación de reportes. Por favor espera un momento e intenta de nuevo.');
         } else {
-          alert('Error al generar el reporte: ' + (err.error?.message || 'Inténtalo de nuevo'));
+          this.modal.error('Error al generar reporte', err.error?.message || 'Inténtalo de nuevo');
         }
       }
     });
@@ -1482,7 +1483,7 @@ export class ProjectWizardComponent implements OnInit {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: () => alert('Error al descargar el PDF del informe ejecutivo.')
+      error: () => this.modal.error('Error', 'Error al descargar el PDF del informe ejecutivo.')
     });
   }
 
@@ -1498,7 +1499,7 @@ export class ProjectWizardComponent implements OnInit {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: () => alert('Error al descargar el Word del informe ejecutivo.')
+      error: () => this.modal.error('Error', 'Error al descargar el Word del informe ejecutivo.')
     });
   }
 
@@ -1514,7 +1515,7 @@ export class ProjectWizardComponent implements OnInit {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: () => alert('Error al descargar el PDF del informe GAP.')
+      error: () => this.modal.error('Error', 'Error al descargar el PDF del informe GAP.')
     });
   }
 
@@ -1530,7 +1531,7 @@ export class ProjectWizardComponent implements OnInit {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: () => alert('Error al descargar el Word del informe GAP.')
+      error: () => this.modal.error('Error', 'Error al descargar el Word del informe GAP.')
     });
   }
 
@@ -1546,7 +1547,7 @@ export class ProjectWizardComponent implements OnInit {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: () => alert('Error al descargar el PDF del plan de acción.')
+      error: () => this.modal.error('Error', 'Error al descargar el PDF del plan de acción.')
     });
   }
 
@@ -1562,7 +1563,7 @@ export class ProjectWizardComponent implements OnInit {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: () => alert('Error al descargar el Word del plan de acción.')
+      error: () => this.modal.error('Error', 'Error al descargar el Word del plan de acción.')
     });
   }
 
@@ -1581,14 +1582,14 @@ export class ProjectWizardComponent implements OnInit {
         this.editingControl.set(null);
         this.loadEvaluation();
       },
-      error: () => alert('Error al guardar el control')
+      error: () => this.modal.error('Error', 'Error al guardar el control')
     });
   }
   deleteControl(controlId: number): void {
     if (!confirm('¿Estás seguro de eliminar este control? Esta acción no se puede deshacer.')) return;
     this.api.deleteControl(controlId).subscribe({
       next: () => this.loadEvaluation(),
-      error: (err) => alert(err.error?.error || 'Error al eliminar el control')
+      error: (err) => this.modal.error('Error', err.error?.error || 'Error al eliminar el control')
     });
   }
   startAddingControl(domainId: number): void { this.addingControlToDomain.set(domainId); }
@@ -1614,7 +1615,7 @@ export class ProjectWizardComponent implements OnInit {
         this.addingControlToDomain.set(null);
         this.loadEvaluation();
       },
-      error: () => alert('Error al crear el control')
+      error: () => this.modal.error('Error', 'Error al crear el control')
     });
   }
   private generateNextControlCode(domain: ControlDomain): string {
@@ -1648,7 +1649,7 @@ export class ProjectWizardComponent implements OnInit {
         this.actionItems.set(items);
       },
       error: () => {
-        alert('Error al eliminar la acción del plan');
+        this.modal.error('Error', 'Error al eliminar la acción del plan');
       }
     });
   }
@@ -1679,7 +1680,7 @@ export class ProjectWizardComponent implements OnInit {
     const title = this.editingActionDomainTitle().trim();
 
     if (!title) {
-      alert('El nombre del dominio no puede estar vacío');
+      this.modal.warning('Campo requerido', 'El nombre del dominio no puede estar vacío');
       return;
     }
 
@@ -1696,7 +1697,7 @@ export class ProjectWizardComponent implements OnInit {
 
     if (!domainObj) {
       console.error('Domain not found. Available domains:', this.domains());
-      alert('No se encontró el dominio. Por favor recarga la página o vuelve al paso 2 y regresa.');
+      this.modal.error('Error', 'No se encontró el dominio. Por favor recarga la página o vuelve al paso 2 y regresa.');
       return;
     }
 
@@ -1711,7 +1712,7 @@ export class ProjectWizardComponent implements OnInit {
         this.editingActionDomainTitle.set('');
       },
       error: () => {
-        alert('Error al guardar el nombre del dominio');
+        this.modal.error('Error', 'Error al guardar el nombre del dominio');
       }
     });
   }
@@ -1732,7 +1733,7 @@ export class ProjectWizardComponent implements OnInit {
     const description = this.editingActionDescription().trim();
 
     if (!title) {
-      alert('El título no puede estar vacío');
+      this.modal.warning('Campo requerido', 'El título no puede estar vacío');
       return;
     }
 
@@ -1748,7 +1749,7 @@ export class ProjectWizardComponent implements OnInit {
         this.editingActionDescription.set('');
       },
       error: () => {
-        alert('Error al guardar los cambios');
+        this.modal.error('Error', 'Error al guardar los cambios');
       }
     });
   }
@@ -1920,9 +1921,9 @@ export class ProjectWizardComponent implements OnInit {
       error: (err) => {
         this.generatingDeliverableContent.set(null);
         if (err.status === 429) {
-          alert('Has alcanzado el límite de generación. Por favor espera un momento e intenta de nuevo.');
+          this.modal.warning('Límite alcanzado', 'Has alcanzado el límite de generación. Por favor espera un momento e intenta de nuevo.');
         } else {
-          alert('Error al generar el documento: ' + (err.error?.message || 'Inténtalo de nuevo'));
+          this.modal.error('Error al generar', err.error?.message || 'Inténtalo de nuevo');
         }
       }
     });
@@ -1940,7 +1941,7 @@ export class ProjectWizardComponent implements OnInit {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: () => alert('Error al descargar el PDF. Asegúrate de que el contenido esté generado.')
+      error: () => this.modal.error('Error', 'Error al descargar el PDF. Asegúrate de que el contenido esté generado.')
     });
   }
 
@@ -1956,7 +1957,7 @@ export class ProjectWizardComponent implements OnInit {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: () => alert('Error al descargar el Word. Asegúrate de que el contenido esté generado.')
+      error: () => this.modal.error('Error', 'Error al descargar el Word. Asegúrate de que el contenido esté generado.')
     });
   }
 
@@ -1972,7 +1973,7 @@ export class ProjectWizardComponent implements OnInit {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: () => alert('No se encontró plantilla Excel para este dominio.')
+      error: () => this.modal.error('Error', 'No se encontró plantilla Excel para este dominio.')
     });
   }
 
@@ -2001,7 +2002,7 @@ export class ProjectWizardComponent implements OnInit {
       },
       error: () => {
         this.savingSnapshot.set(false);
-        alert('Error al guardar la evaluación.');
+        this.modal.error('Error', 'Error al guardar la evaluación.');
       }
     });
   }
@@ -2012,9 +2013,9 @@ export class ProjectWizardComponent implements OnInit {
       next: () => {
         this.loadEvaluation();
         this.loadEvaluationSnapshots();
-        alert('Evaluación restaurada exitosamente.');
+        this.modal.success('Restaurado', 'Evaluación restaurada exitosamente.');
       },
-      error: () => alert('Error al restaurar la evaluación.')
+      error: () => this.modal.error('Error', 'Error al restaurar la evaluación.')
     });
   }
 
@@ -2027,7 +2028,7 @@ export class ProjectWizardComponent implements OnInit {
           this.selectedSnapshot.set(null);
         }
       },
-      error: () => alert('Error al eliminar la evaluación.')
+      error: () => this.modal.error('Error', 'Error al eliminar la evaluación.')
     });
   }
 
@@ -2043,7 +2044,7 @@ export class ProjectWizardComponent implements OnInit {
       },
       error: () => {
         this.loadingSnapshotReport.set(false);
-        alert('Error al cargar el informe del snapshot.');
+        this.modal.error('Error', 'Error al cargar el informe del snapshot.');
       }
     });
   }
@@ -2066,11 +2067,11 @@ export class ProjectWizardComponent implements OnInit {
 
   saveDomain(domain: ControlDomain): void {
     if (!domain.name.trim()) {
-      alert('El nombre del dominio no puede estar vacío');
+      this.modal.warning('Campo requerido', 'El nombre del dominio no puede estar vacío');
       return;
     }
     if (!domain.code.trim()) {
-      alert('El código del dominio no puede estar vacío');
+      this.modal.warning('Campo requerido', 'El código del dominio no puede estar vacío');
       return;
     }
     this.api.updateDomain(domain.id, { name: domain.name, code: domain.code }).subscribe({
@@ -2083,7 +2084,7 @@ export class ProjectWizardComponent implements OnInit {
         this.domains.set(updatedDomains);
       },
       error: () => {
-        alert('Error al guardar el dominio');
+        this.modal.error('Error', 'Error al guardar el dominio');
         this.loadEvaluation();
       }
     });
@@ -2264,7 +2265,7 @@ export class ProjectWizardComponent implements OnInit {
       },
       error: () => {
         this.savingVersion.set(false);
-        alert('Error al guardar la versión.');
+        this.modal.error('Error', 'Error al guardar la versión.');
       }
     });
   }
@@ -2284,7 +2285,7 @@ export class ProjectWizardComponent implements OnInit {
           this.selectedDeliverable.set(res.deliverable);
         }
       },
-      error: () => alert('Error al restaurar la versión.')
+      error: () => this.modal.error('Error', 'Error al restaurar la versión.')
     });
   }
 

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
+import { ModalService } from '../../shared/modal.service';
 
 // Incidents Component - Registro de Incidentes PDP con decisión automática SPDP
 
@@ -467,6 +468,7 @@ export class IncidentsComponent implements OnInit {
 
   private pdpToolsService = inject(PdpToolsService);
   private route = inject(ActivatedRoute);
+  private modal = inject(ModalService);
 
   ngOnInit(): void {
     // Read project_id from query params
@@ -570,11 +572,11 @@ export class IncidentsComponent implements OnInit {
   addIncident(): void {
     const d = this.newIncident();
     if (!d.detection_date || !d.type) {
-      alert('Complete al menos la fecha de detección y tipo de incidente.');
+      this.modal.warning('Campos requeridos', 'Complete al menos la fecha de detección y tipo de incidente.');
       return;
     }
     if (!d.data_categories || d.data_categories.length === 0) {
-      alert('Seleccione al menos una categoría de datos afectados.');
+      this.modal.warning('Campos requeridos', 'Seleccione al menos una categoría de datos afectados.');
       return;
     }
 
@@ -598,7 +600,7 @@ export class IncidentsComponent implements OnInit {
       },
       error: (err: any) => {
         const msg = err.error?.message || (err.error?.errors ? JSON.stringify(err.error.errors) : err.message);
-        alert('Error al registrar: ' + msg);
+        this.modal.error('Error al registrar', msg);
         this.saving.set(false);
       }
     });
@@ -609,8 +611,8 @@ export class IncidentsComponent implements OnInit {
     return this.incidents().filter((i: any) => i.notification_decision === this.filterDecision());
   }
 
-  notifySpdp(): void { alert('Iniciando proceso de notificación a SPDP – Art. 39 Reglamento LOPDP'); }
-  viewLegalBasis(): void { alert('Art. 39 del Reglamento a la LOPDP – Notificación de brechas de seguridad\nArt. 24 RGLOPDP – Notificación al titular'); }
+  notifySpdp(): void { this.modal.info('Notificación SPDP', 'Iniciando proceso de notificación a SPDP – Art. 39 Reglamento LOPDP'); }
+  viewLegalBasis(): void { this.modal.info('Fundamento Legal', 'Art. 39 del Reglamento a la LOPDP – Notificación de brechas de seguridad\nArt. 24 RGLOPDP – Notificación al titular'); }
   viewIncident(id: number): void { /* TODO */ }
 
   exportIncidents(): void {
@@ -632,7 +634,7 @@ export class IncidentsComponent implements OnInit {
         this.exporting.set(false);
       },
       error: (err: any) => {
-        alert('Error al exportar: ' + (err.error?.message || err.message));
+        this.modal.error('Error al exportar', err.error?.message || err.message);
         this.exporting.set(false);
       }
     });

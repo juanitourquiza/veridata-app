@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { PdpToolsService } from '../pdp-tools.service';
+import { ModalService } from '../../shared/modal.service';
 
 // Transfer Qualification Component - Calificación de Transferencias Internacionales
 
@@ -336,6 +337,7 @@ export class TransferQualificationComponent implements OnInit {
   generatingReport = signal(false);
 
   private pdpToolsService = inject(PdpToolsService);
+  private modalService = inject(ModalService);
   private route = inject(ActivatedRoute);
 
   ngOnInit(): void {
@@ -418,11 +420,11 @@ export class TransferQualificationComponent implements OnInit {
   // Save
   saveQualification(): void {
     if (!this.transfer().destination_country || !this.transfer().recipient) {
-      alert('Debe completar al menos el país de destino y receptor.');
+      this.modalService.warning('Validación', 'Debe completar al menos el país de destino y receptor.');
       return;
     }
     if (!this.transfer().data_categories_list || this.transfer().data_categories_list.length === 0) {
-      alert('Debe seleccionar al menos una categoría de datos.');
+      this.modalService.warning('Validación', 'Debe seleccionar al menos una categoría de datos.');
       return;
     }
 
@@ -448,12 +450,12 @@ export class TransferQualificationComponent implements OnInit {
         if (res.criteria) {
           this.criteria.set(res.criteria);
         }
-        alert('Calificación guardada exitosamente');
+        this.modalService.success('Éxito', 'Calificación guardada exitosamente');
         this.loadHistory();
         this.saving.set(false);
       },
       error: (err: any) => {
-        alert('Error al guardar: ' + (err.error?.message || err.message));
+        this.modalService.error('Error', 'Error al guardar: ' + (err.error?.message || err.message));
         this.saving.set(false);
       }
     });
@@ -484,14 +486,14 @@ export class TransferQualificationComponent implements OnInit {
         });
         this.criteria.set(res.criteria || []);
       },
-      error: (err: any) => alert('Error al cargar: ' + (err.error?.message || err.message))
+      error: (err: any) => this.modalService.error('Error', 'Error al cargar: ' + (err.error?.message || err.message))
     });
   }
 
   generateReport(): void {
     const id = this.currentQualificationId();
     if (!id) {
-      alert('Debe guardar la calificación primero.');
+      this.modalService.warning('Atención', 'Debe guardar la calificación primero.');
       return;
     }
     this.generatingReport.set(true);
@@ -506,7 +508,7 @@ export class TransferQualificationComponent implements OnInit {
         this.generatingReport.set(false);
       },
       error: (err: any) => {
-        alert('Error al generar informe: ' + (err.error?.message || err.message));
+        this.modalService.error('Error', 'Error al generar informe: ' + (err.error?.message || err.message));
         this.generatingReport.set(false);
       }
     });
@@ -522,7 +524,7 @@ export class TransferQualificationComponent implements OnInit {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: (err: any) => alert('Error al generar informe: ' + (err.error?.message || err.message))
+      error: (err: any) => this.modalService.error('Error', 'Error al generar informe: ' + (err.error?.message || err.message))
     });
   }
 
