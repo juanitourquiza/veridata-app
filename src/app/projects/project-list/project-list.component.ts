@@ -147,7 +147,9 @@ export class ProjectListComponent implements OnInit {
   snapshots = signal<{ id: number; name: string; snapshot_date: string; global_maturity: number; notes?: string }[]>([]);
   saving = signal(false);
 
-  constructor(private api = inject(ApiService), public auth = inject(AuthService), private modalService = inject(ModalService)) { }
+  private api = inject(ApiService);
+  public auth = inject(AuthService);
+  private modalService = inject(ModalService);
 
   ngOnInit(): void {
     this.loadProjects();
@@ -155,7 +157,7 @@ export class ProjectListComponent implements OnInit {
 
   loadProjects(): void {
     this.api.getProjects().subscribe({
-      next: (p: Project[]) => this.projects.set(p),
+      next: (response) => this.projects.set(response.data || []),
       error: (err: any) => {
         this.modalService.error('Error', 'Error al cargar proyectos: ' + err.message);
         this.loading.set(false);
