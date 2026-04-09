@@ -744,120 +744,7 @@ import { ModalService } from '../../shared/modal.service';
         </div>
       }
 
-      <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(5)">← Anterior</button><button class="vd-btn vd-btn-primary" (click)="goToStep(7)">Herramientas PDP →</button></div>
-    }
-
-    <!-- Step 7: Herramientas PDP -->
-    @if (currentStep() === 7) {
-      <div class="vd-card">
-        <h2>🛠️ Herramientas y Registros PDP</h2>
-        <p style="color:#64748b;margin-bottom:1.5rem;">Herramientas vinculadas a este proyecto para cumplimiento de LOPDP.</p>
-
-        <div class="tools-grid">
-          <!-- RAT, Riesgos e Impacto -->
-          <div class="tool-category">
-            <h3>📋 RAT, Riesgos e Impacto</h3>
-            <div class="tool-list">
-              <button class="tool-btn" (click)="openTool('/tools/rat')">
-                <span class="tool-icon">📊</span>
-                <div class="tool-info">
-                  <strong>Registro de Actividades</strong>
-                  <span>RAT - Registro de tratamientos de datos</span>
-                </div>
-              </button>
-              <button class="tool-btn" (click)="openTool('/tools/impact-assessment')">
-                <span class="tool-icon">⚠️</span>
-                <div class="tool-info">
-                  <strong>Riesgos e Impacto</strong>
-                  <span>DPIA - Evaluación de impacto en privacidad</span>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          <!-- Calificaciones -->
-          <div class="tool-category">
-            <h3>⭐ Calificaciones</h3>
-            <div class="tool-list">
-              <button class="tool-btn" (click)="openTool('/tools/officer-qualification')">
-                <span class="tool-icon">👤</span>
-                <div class="tool-info">
-                  <strong>Calificación de Encargados</strong>
-                  <span>Evaluación de proveedores y encargados</span>
-                </div>
-              </button>
-              <button class="tool-btn" (click)="openTool('/tools/transfer-qualification')">
-                <span class="tool-icon">🌍</span>
-                <div class="tool-info">
-                  <strong>Transferencias Internacionales</strong>
-                  <span>Calificación de transferencias de datos</span>
-                </div>
-              </button>
-              <button class="tool-btn" (click)="openTool('/tools/qualifications-summary')">
-                <span class="tool-icon">📈</span>
-                <div class="tool-info">
-                  <strong>Resumen de Calificaciones</strong>
-                  <span>Dashboard de todas las calificaciones</span>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          <!-- Registros -->
-          <div class="tool-category">
-            <h3>📊 Registros</h3>
-            <div class="tool-list">
-              <button class="tool-btn" (click)="openTool('/tools/rights-exercise')">
-                <span class="tool-icon">✋</span>
-                <div class="tool-info">
-                  <strong>Ejercicio de Derechos</strong>
-                  <span>Registro de solicitudes ARCO</span>
-                </div>
-              </button>
-              <button class="tool-btn" (click)="openTool('/tools/incidents')">
-                <span class="tool-icon">🚨</span>
-                <div class="tool-info">
-                  <strong>Incidentes PDP</strong>
-                  <span>Registro de brechas de seguridad</span>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          <!-- Calculadoras y Herramientas -->
-          <div class="tool-category">
-            <h3>🔧 Herramientas</h3>
-            <div class="tool-list">
-              <button class="tool-btn" (click)="openTool('/tools/legitimacy-report')">
-                <span class="tool-icon">⚖️</span>
-                <div class="tool-info">
-                  <strong>Informe de Legitimación</strong>
-                  <span>Análisis de interés legítimo</span>
-                </div>
-              </button>
-              <button class="tool-btn" (click)="openTool('/tools/sanctions-calculator')">
-                <span class="tool-icon">💰</span>
-                <div class="tool-info">
-                  <strong>Calculadora de Sanciones</strong>
-                  <span>Estimación de sanciones LOPDP</span>
-                </div>
-              </button>
-              <button class="tool-btn" (click)="openTool('/tools/large-scale-calculator')">
-                <span class="tool-icon">📏</span>
-                <div class="tool-info">
-                  <strong>Cálculo de Gran Escala</strong>
-                  <span>Matriz técnica MTGE Art. 8</span>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="step-actions" style="margin-top:2rem">
-          <button class="vd-btn vd-btn-secondary" (click)="goToStep(6)">← Anterior</button>
-          <button class="vd-btn vd-btn-primary" (click)="finishProject()">Finalizar Proyecto ✓</button>
-        </div>
-      </div>
+      <div class="step-actions"><button class="vd-btn vd-btn-secondary" (click)="goToStep(5)">← Anterior</button><button class="vd-btn vd-btn-success" (click)="finishProject()">✓ Finalizar Proyecto</button></div>
     }
 
     <!-- Save Version Dialog -->
@@ -1036,17 +923,6 @@ import { ModalService } from '../../shared/modal.service';
     /* Repository - Step 6 */
     .repo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
 
-    /* Tools - Step 7 */
-    .tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
-    .tool-category { background: #f8fafc; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; }
-    .tool-category h3 { margin: 0 0 1rem; font-size: 0.9375rem; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
-    .tool-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .tool-btn { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: white; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: left; }
-    .tool-btn:hover { border-color: #5687f3; background: rgba(86,135,243,0.05); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    .tool-icon { font-size: 1.5rem; width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 8px; }
-    .tool-info { display: flex; flex-direction: column; }
-    .tool-info strong { font-size: 0.875rem; color: #1e293b; }
-    .tool-info span { font-size: 0.75rem; color: #64748b; }
     .repo-section { background: #f8fafc; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; }
     .repo-section h3 { margin: 0 0 1rem; font-size: 1rem; color: #1e293b; }
     .repo-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
@@ -1113,7 +989,7 @@ import { ModalService } from '../../shared/modal.service';
   `],
 })
 export class ProjectWizardComponent implements OnInit {
-  steps = [{ num: 1, label: 'Información' }, { num: 2, label: 'Evaluación' }, { num: 3, label: 'Resultados' }, { num: 4, label: 'Plan de Acción' }, { num: 5, label: 'Entregables' }, { num: 6, label: 'Repositorio' }, { num: 7, label: 'Herramientas PDP' }];
+  steps = [{ num: 1, label: 'Información' }, { num: 2, label: 'Evaluación' }, { num: 3, label: 'Resultados' }, { num: 4, label: 'Plan de Acción' }, { num: 5, label: 'Entregables' }, { num: 6, label: 'Repositorio' }];
   currentStep = signal(1);
   isEdit = false;
   projectId = 0;
