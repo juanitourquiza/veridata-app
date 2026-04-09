@@ -23,6 +23,25 @@ import { ModalService } from '../../shared/modal.service';
         <p class="tools-subtitle">Inventario de tratamientos de datos personales según Art. 12 LOPDP</p>
       </div>
 
+      <!-- RAT Info Form -->
+      <div class="vd-card">
+        <h3>Información General del RAT</h3>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Nombre *</label>
+            <input class="vd-input" [ngModel]="ratInfo().name" (ngModelChange)="ratInfo.set({...ratInfo(), name: $event})" placeholder="Ej: RAT Clientes 2025">
+          </div>
+          <div class="form-field">
+            <label>Versión</label>
+            <input class="vd-input" [ngModel]="ratInfo().version" (ngModelChange)="ratInfo.set({...ratInfo(), version: $event})" placeholder="Ej: 1.0">
+          </div>
+        </div>
+        <div class="form-field" style="margin-top: 1rem;">
+          <label>Descripción</label>
+          <textarea class="vd-textarea" [ngModel]="ratInfo().description" (ngModelChange)="ratInfo.set({...ratInfo(), description: $event})" placeholder="Descripción general del RAT..." rows="3"></textarea>
+        </div>
+      </div>
+
       <!-- Upload Section -->
       <div class="vd-card upload-section">
         <h3>Cargar información automáticamente</h3>
@@ -164,7 +183,7 @@ export class RatComponent implements OnInit {
   processing = signal(false);
   processingStatus = signal('');
   projectId = signal<number | null>(null);
-  ratInfo = signal<any>({ name: '', code: '', version: '1.0', area: '' });
+  ratInfo = signal<any>({ name: '', description: '', version: '1.0' });
 
   private pdpToolsService = inject(PdpToolsService);
   private modalService = inject(ModalService);
@@ -285,9 +304,21 @@ export class RatComponent implements OnInit {
   }
 
   saveRat(): void {
+    // Validate required fields
+    if (!this.ratInfo().name?.trim()) {
+      this.modalService.error('Error', 'El nombre del RAT es obligatorio');
+      return;
+    }
+
     const ratData = {
-      ...this.ratInfo(),
-      activities: this.activities()
+      name: this.ratInfo().name,
+      description: this.ratInfo().description || '',
+      version: this.ratInfo().version || '1.0',
+      project_id: this.projectId(),
+      ai_metadata: {
+        activities: this.activities(),
+        activity_count: this.activities().length
+      }
     };
 
     this.pdpToolsService.createRatRecord(ratData).subscribe({
@@ -303,12 +334,13 @@ export class RatComponent implements OnInit {
     this.pdpToolsService.getRatRecord(id).subscribe({
       next: (res) => {
         this.ratInfo.set({
-          name: res.name,
-          code: res.code,
-          version: res.version,
-          area: res.area
+          name: res.name || '',
+          description: res.description || '',
+          version: res.version || '1.0'
         });
-        this.activities.set(res.activities || []);
+        // Extract activities from ai_metadata if available
+        const activities = res.ai_metadata?.activities || res.activities || [];
+        this.activities.set(activities);
       },
       error: (err) => this.modalService.error('Error', 'Error al cargar versión: ' + err.message)
     });

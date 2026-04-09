@@ -343,19 +343,31 @@ export class RightsExerciseComponent implements OnInit {
   }
 
   addRequest(): void {
-    const deadline = new Date();
-    deadline.setDate(deadline.getDate() + 15);
+    // Validate required fields
+    if (!this.newRequest().received_date) {
+      this.modal.error('Error', 'La fecha de recepción es obligatoria');
+      return;
+    }
+    if (!this.newRequest().requester_name?.trim()) {
+      this.modal.error('Error', 'El nombre del solicitante es obligatorio');
+      return;
+    }
+    if (!this.newRequest().right_type) {
+      this.modal.error('Error', 'El derecho ejercido es obligatorio');
+      return;
+    }
 
-    this.pdpToolsService.createRightsRequest({
-      received_date: this.newRequest().received_date,
-      channel: this.newRequest().channel,
-      requester_type: this.newRequest().requester_type,
+    // Map frontend fields to backend expected fields
+    const requestData = {
+      project_id: this.projectId(),
+      request_type: this.newRequest().right_type,  // Maps right_type → request_type
       requester_name: this.newRequest().requester_name,
-      right_type: this.newRequest().right_type,
-      responsible_area: this.newRequest().responsible_area,
-      description: this.newRequest().description,
-      requires_clarification: this.newRequest().requires_clarification
-    }).subscribe({
+      requester_email: '',  // Optional field, backend accepts empty
+      request_date: this.newRequest().received_date,  // Maps received_date → request_date
+      description: `Canal: ${this.newRequest().channel || 'N/A'} | Tipo solicitante: ${this.newRequest().requester_type || 'N/A'} | Área: ${this.newRequest().responsible_area || 'N/A'} | ${this.newRequest().description || ''}`
+    };
+
+    this.pdpToolsService.createRightsRequest(requestData).subscribe({
       next: () => {
         this.modal.success('Solicitud registrada', 'La solicitud de ejercicio de derechos se registró correctamente.');
         this.loadRequests();
