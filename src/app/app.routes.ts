@@ -22,6 +22,7 @@ export const routes: Routes = [
             { path: 'config', loadComponent: () => import('./tenant-config/tenant-config.component').then(m => m.TenantConfigComponent) },
 
             // Herramientas y Registros PDP
+            { path: 'tools', loadComponent: () => import('./tools/tools.component').then(m => m.ToolsComponent) },
             { path: 'tools/rat', loadComponent: () => import('./tools/rat/rat.component').then(m => m.RatComponent) },
             { path: 'tools/impact-assessment', loadComponent: () => import('./tools/impact-assessment/impact-assessment.component').then(m => m.ImpactAssessmentComponent) },
             { path: 'tools/officer-qualification', loadComponent: () => import('./tools/officer-qualification/officer-qualification.component').then(m => m.OfficerQualificationComponent) },
