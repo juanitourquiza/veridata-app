@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TenantConfigService, Organization, TeamMember, TeamInvitation, Preferences, InviteRequest } from '../core/services/tenant-config.service';
+import { ModalService } from '../shared/modal.service';
 
 type TabType = 'organization' | 'team' | 'preferences';
 
@@ -1147,6 +1148,7 @@ type TabType = 'organization' | 'team' | 'preferences';
 })
 export class TenantConfigComponent implements OnInit {
   private tenantConfigService = inject(TenantConfigService);
+  private modalService = inject(ModalService);
 
   // Tabs
   activeTab = signal<TabType>('organization');
@@ -1280,12 +1282,11 @@ export class TenantConfigComponent implements OnInit {
   }
 
   cancelInvitation(id: number) {
-    if (!confirm('¿Estás seguro de cancelar esta invitación?')) return;
-
-    this.tenantConfigService.cancelInvitation(id).subscribe({
-      next: () => {
-        this.loadData();
-      },
+    this.modalService.confirm('¿Cancelar invitación?', 'Esta acción no se puede deshacer.').then(confirmed => {
+      if (!confirmed) return;
+      this.tenantConfigService.cancelInvitation(id).subscribe({
+        next: () => { this.loadData(); }
+      });
     });
   }
 
@@ -1298,12 +1299,13 @@ export class TenantConfigComponent implements OnInit {
   }
 
   removeMember(userId: number) {
-    if (!confirm('¿Estás seguro de eliminar este miembro?')) return;
-
-    this.tenantConfigService.removeMember(userId).subscribe({
-      next: () => {
-        this.loadData();
-      },
+    this.modalService.confirm('¿Eliminar miembro?', 'Esta acción no se puede deshacer.').then(confirmed => {
+      if (!confirmed) return;
+      this.tenantConfigService.removeMember(userId).subscribe({
+        next: () => {
+          this.loadData();
+        },
+      });
     });
   }
 

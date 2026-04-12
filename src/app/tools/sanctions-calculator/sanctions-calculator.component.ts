@@ -97,20 +97,65 @@ interface TipoInfraccion {
             <span class="tipo-badge" [class]="'badge-' + selectedTipo()?.tipo">{{ selectedInfraccion()?.codigo }}</span>
             <span class="infraccion-mini">{{ selectedInfraccion()?.descripcion }}</span>
           </div>
-          <div class="vdn-section">
-            <label class="vd-label">Volumen de Negocio Anual (VDN) USD</label>
-            <div class="currency-input">
-              <span class="currency-prefix">$</span>
-              <input type="number" class="vd-input" [ngModel]="vdn()" (ngModelChange)="vdn.set($event)" placeholder="Ej: 1000000" min="0">
+
+          <!-- Selector de Sector -->
+          <div class="sector-section">
+            <h4>🏢 Sector</h4>
+            <div class="sector-options">
+              <label class="sector-option" [class.selected]="sectorTipo() === 'privado'">
+                <input type="radio" name="sector" [checked]="sectorTipo() === 'privado'" (change)="sectorTipo.set('privado')">
+                <span class="sector-label">Sector Privado</span>
+                <span class="sector-desc">(VDN - Volumen de Negocio)</span>
+              </label>
+              <label class="sector-option" [class.selected]="sectorTipo() === 'publico'">
+                <input type="radio" name="sector" [checked]="sectorTipo() === 'publico'" (change)="sectorTipo.set('publico')">
+                <span class="sector-label">Sector Público</span>
+                <span class="sector-desc">(SBU - Salario Básico Unificado)</span>
+              </label>
             </div>
           </div>
+
+          <!-- VDN o SBU según sector -->
+          @if (sectorTipo() === 'privado') {
+            <div class="vdn-section">
+              <label class="vd-label">Volumen de Negocio Anual (VDN) USD</label>
+              <div class="currency-input">
+                <span class="currency-prefix">$</span>
+                <input type="number" class="vd-input" [ngModel]="vdn()" (ngModelChange)="vdn.set($event)" placeholder="Ej: 1000000" min="0">
+              </div>
+            </div>
+          } @else {
+            <div class="vdn-section">
+              <label class="vd-label">Salario Básico Unificado (SBU) USD</label>
+              <div class="currency-input">
+                <span class="currency-prefix">$</span>
+                <input type="number" class="vd-input" [ngModel]="sbu()" (ngModelChange)="sbu.set($event)" placeholder="Ej: 460" min="0">
+                <small class="input-help">Valor referencial SBU Ecuador 2025</small>
+              </div>
+            </div>
+          }
+
+          <!-- Rango de la Infracción -->
+          <div class="rango-section">
+            <h4>📊 Rango de la Infracción (0-100%)</h4>
+            <p class="rango-desc">Grado de cumplimiento normativo y medidas correctivas adoptadas</p>
+            <div class="range-slider">
+              <input type="range" min="0" max="100" [ngModel]="rangoInfraccion()" (ngModelChange)="rangoInfraccion.set($event)">
+              <div class="range-labels">
+                <span>Mínima (0%)</span>
+                <span class="range-value">{{ rangoInfraccion() }}%</span>
+                <span>Máxima (100%)</span>
+              </div>
+            </div>
+          </div>
+
           <div class="factores-section">
             <h4>✅ Factores Atenuantes</h4>
             @for (f of factoresAtenuantes; track f.id) {
               <label class="factor-item">
                 <input type="checkbox" [checked]="f.selected" (change)="toggleFactor('atenuante', f.id)">
                 <span class="factor-text">{{ f.descripcion }}</span>
-                <span class="factor-impact">-{{ f.impacto }}%</span>
+                <span class="factor-impact">{{ f.impacto }}%</span>
               </label>
             }
           </div>
@@ -138,7 +183,7 @@ interface TipoInfraccion {
           </div>
           <div class="step-nav">
             <button class="vd-btn vd-btn-secondary" (click)="goToStep(2)">← Anterior</button>
-            <button class="vd-btn vd-btn-primary" (click)="calcular()" [disabled]="!vdn()">Calcular</button>
+            <button class="vd-btn vd-btn-primary" (click)="calcular()" [disabled]="sectorTipo() === 'privado' ? !vdn() : !sbu()">Calcular</button>
           </div>
         </div>
       }
@@ -152,12 +197,20 @@ interface TipoInfraccion {
           </div>
           <div class="result-summary">
             <div class="result-row">
-              <span class="result-label">VDN:</span>
-              <span class="result-value">{{ vdn() | currency:'USD':'symbol':'1.0-0' }}</span>
+              <span class="result-label">Sector:</span>
+              <span class="result-value">{{ sectorTipo() === 'privado' ? 'Privado' : 'Público' }}</span>
+            </div>
+            <div class="result-row">
+              <span class="result-label">{{ sectorTipo() === 'privado' ? 'VDN:' : 'SBU:' }}</span>
+              <span class="result-value">{{ sectorTipo() === 'privado' ? (vdn() | currency:'USD':'symbol':'1.0-0') : (sbu() | currency:'USD':'symbol':'1.0-0') }}</span>
             </div>
             <div class="result-row">
               <span class="result-label">Rango Legal:</span>
               <span class="result-value">{{ selectedInfraccion()?.rangoMin }}% - {{ selectedInfraccion()?.rangoMax }}%</span>
+            </div>
+            <div class="result-row">
+              <span class="result-label">Rango Infracción:</span>
+              <span class="result-value">{{ rangoInfraccion() }}%</span>
             </div>
             <div class="result-row">
               <span class="result-label">Sanción Base:</span>
@@ -345,60 +398,67 @@ export class SanctionsCalculatorComponent implements OnInit {
   rangoMinFinal = signal(0);
   rangoMaxFinal = signal(0);
 
+  // Modelo según Resolución SPDP-SPD-2025-0022-R
+  sectorTipo = signal<'privado' | 'publico'>('privado');
+  sbu = signal<number>(0); // Salario Básico Unificado para sector público
+  rangoInfraccion = signal<number>(50); // 0-100% según nivel de cumplimiento
+
   tiposInfraccion: TipoInfraccion[] = [
     {
       tipo: 'leve',
       label: 'Leve',
-      rango: '0.5% - 1.5% VDN',
+      rango: '0.1% - 0.7% VDN',
       infracciones: [
-        { codigo: '67.1.a', descripcion: 'No proporcionar información al titular sobre el tratamiento de sus datos personales', rangoMin: 0.5, rangoMax: 1.5 },
-        { codigo: '67.1.b', descripcion: 'No responder solicitudes de ejercicio de derechos en el plazo establecido', rangoMin: 0.5, rangoMax: 1.5 },
-        { codigo: '67.1.c', descripcion: 'No mantener actualizado el registro de actividades de tratamiento', rangoMin: 0.5, rangoMax: 1.5 },
-        { codigo: '67.1.d', descripcion: 'No mantener disponible y publicada la política de protección de datos', rangoMin: 0.5, rangoMax: 1.5 },
-        { codigo: '67.1.e', descripcion: 'No aplicar las medidas de seguridad establecidas en la normativa', rangoMin: 0.5, rangoMax: 1.5 },
-        { codigo: '67.1.f', descripcion: 'No implementar la privacidad desde el diseño por defecto', rangoMin: 0.5, rangoMax: 1.5 },
-        { codigo: '67.1.g', descripcion: 'No formalizar la relación con encargados mediante contrato o acto jurídico equivalente', rangoMin: 0.5, rangoMax: 1.5 },
-        { codigo: '67.1.h', descripcion: 'No realizar evaluaciones de impacto en la protección de datos cuando sea obligatorio', rangoMin: 0.5, rangoMax: 1.5 },
-        { codigo: '67.1.i', descripcion: 'No designar delegado de protección de datos cuando sea obligatorio', rangoMin: 0.5, rangoMax: 1.5 },
-        { codigo: '67.1.j', descripcion: 'No notificar a la autoridad las brechas de seguridad en el plazo establecido', rangoMin: 0.5, rangoMax: 1.5 },
-        { codigo: '67.1.k', descripcion: 'No informar a los titulares sobre las brechas de seguridad cuando corresponda', rangoMin: 0.5, rangoMax: 1.5 },
+        { codigo: 'Art. 67.1.a', descripcion: 'No proporcionar información al titular sobre el tratamiento de sus datos personales', rangoMin: 0.1, rangoMax: 0.7 },
+        { codigo: 'Art. 67.1.b', descripcion: 'No responder solicitudes de ejercicio de derechos en el plazo establecido', rangoMin: 0.1, rangoMax: 0.7 },
+        { codigo: 'Art. 67.1.c', descripcion: 'No mantener actualizado el registro de actividades de tratamiento (RAT)', rangoMin: 0.1, rangoMax: 0.7 },
+        { codigo: 'Art. 67.1.d', descripcion: 'No mantener disponible y publicada la política de protección de datos', rangoMin: 0.1, rangoMax: 0.7 },
+        { codigo: 'Art. 67.1.e', descripcion: 'No aplicar las medidas de seguridad establecidas en la normativa', rangoMin: 0.1, rangoMax: 0.7 },
+        { codigo: 'Art. 67.1.f', descripcion: 'No implementar la privacidad desde el diseño por defecto (PbD)', rangoMin: 0.1, rangoMax: 0.7 },
+        { codigo: 'Art. 67.1.g', descripcion: 'No formalizar la relación con encargados mediante contrato o acto jurídico equivalente', rangoMin: 0.1, rangoMax: 0.7 },
+        { codigo: 'Art. 67.1.h', descripcion: 'No realizar evaluaciones de impacto en la protección de datos (EIPD) cuando sea obligatorio', rangoMin: 0.1, rangoMax: 0.7 },
+        { codigo: 'Art. 67.1.i', descripcion: 'No designar delegado de protección de datos (DPD) cuando sea obligatorio', rangoMin: 0.1, rangoMax: 0.7 },
+        { codigo: 'Art. 67.1.j', descripcion: 'No notificar a la autoridad las brechas de seguridad en el plazo establecido', rangoMin: 0.1, rangoMax: 0.7 },
+        { codigo: 'Art. 67.1.k', descripcion: 'No informar a los titulares sobre las brechas de seguridad cuando corresponda', rangoMin: 0.1, rangoMax: 0.7 },
       ]
     },
     {
       tipo: 'grave',
       label: 'Grave',
-      rango: '1.5% - 4% VDN',
+      rango: '0.7% - 1.0% VDN',
       infracciones: [
-        { codigo: '67.2.a', descripcion: 'Tratamiento ilícito de datos personales sin base legal válida', rangoMin: 1.5, rangoMax: 4.0 },
-        { codigo: '67.2.b', descripcion: 'Tratamiento ilícito de datos sensibles sin autorización de la autoridad', rangoMin: 1.5, rangoMax: 4.0 },
-        { codigo: '67.2.c', descripcion: 'Tratamiento ilícito de datos personales de niñas, niños o adolescentes', rangoMin: 1.5, rangoMax: 4.0 },
-        { codigo: '67.2.d', descripcion: 'Transferencia internacional de datos sin garantías de protección adecuadas', rangoMin: 1.5, rangoMax: 4.0 },
-        { codigo: '67.2.e', descripcion: 'Uso de datos personales para fines discriminatorios o ilegales', rangoMin: 1.5, rangoMax: 4.0 },
-        { codigo: '67.2.f', descripcion: 'Venta de datos personales sin consentimiento expreso del titular', rangoMin: 1.5, rangoMax: 4.0 },
-        { codigo: '67.2.g', descripcion: 'Obstaculización de las facultades de inspección o investigación de la autoridad', rangoMin: 1.5, rangoMax: 4.0 },
-        { codigo: '67.2.h', descripcion: 'No adoptar medidas de seguridad que resulten en vulneración grave de datos', rangoMin: 1.5, rangoMax: 4.0 },
-        { codigo: '67.2.i', descripcion: 'Reincidencia en infracciones leves sancionadas previamente', rangoMin: 1.5, rangoMax: 4.0 },
-        { codigo: '67.2.j', descripcion: 'Mantenimiento de datos personales después de cumplido el plazo de conservación sin causa justificada', rangoMin: 1.5, rangoMax: 4.0 },
+        { codigo: 'Art. 67.2.a', descripcion: 'Tratamiento ilícito de datos personales sin base legal válida', rangoMin: 0.7, rangoMax: 1.0 },
+        { codigo: 'Art. 67.2.b', descripcion: 'Tratamiento ilícito de datos sensibles sin autorización de la autoridad', rangoMin: 0.7, rangoMax: 1.0 },
+        { codigo: 'Art. 67.2.c', descripcion: 'Tratamiento ilícito de datos personales de niñas, niños o adolescentes', rangoMin: 0.7, rangoMax: 1.0 },
+        { codigo: 'Art. 67.2.d', descripcion: 'Transferencia internacional de datos sin garantías de protección adecuadas', rangoMin: 0.7, rangoMax: 1.0 },
+        { codigo: 'Art. 67.2.e', descripcion: 'Uso de datos personales para fines discriminatorios o ilegales', rangoMin: 0.7, rangoMax: 1.0 },
+        { codigo: 'Art. 67.2.f', descripcion: 'Venta de datos personales sin consentimiento expreso del titular', rangoMin: 0.7, rangoMax: 1.0 },
+        { codigo: 'Art. 67.2.g', descripcion: 'Obstaculización de las facultades de inspección o investigación de la autoridad', rangoMin: 0.7, rangoMax: 1.0 },
+        { codigo: 'Art. 67.2.h', descripcion: 'No adoptar medidas de seguridad que resulten en vulneración grave de datos', rangoMin: 0.7, rangoMax: 1.0 },
+        { codigo: 'Art. 67.2.i', descripcion: 'Reincidencia en infracciones leves sancionadas previamente', rangoMin: 0.7, rangoMax: 1.0 },
+        { codigo: 'Art. 67.2.j', descripcion: 'Mantenimiento de datos personales después del plazo de conservación sin causa justificada', rangoMin: 0.7, rangoMax: 1.0 },
       ]
     }
   ];
 
+  // Factores atenuantes según Art. 68 LOPDP
   factoresAtenuantes = [
-    { id: 'at1', descripcion: 'Cumplimiento de medidas de seguridad apropiadas (Art. 68.1.a)', impacto: 15, selected: false },
-    { id: 'at2', descripcion: 'Cooperación activa con la autoridad (Art. 68.1.b)', impacto: 20, selected: false },
-    { id: 'at3', descripcion: 'Adopción de medidas correctivas inmediatas (Art. 68.1.c)', impacto: 15, selected: false },
-    { id: 'at4', descripcion: 'Buena fe del infractor y ausencia de dolo (Art. 68.1.d)', impacto: 10, selected: false },
-    { id: 'at5', descripcion: 'Ausencia de beneficio económico indebido (Art. 68.1.e)', impacto: 10, selected: false },
-    { id: 'at6', descripcion: 'Tamaño reducido de la organización (Art. 68.1.f)', impacto: 10, selected: false },
-    { id: 'at7', descripcion: 'Cumplimiento previo de obligaciones de transparencia (Art. 68.1.g)', impacto: 10, selected: false },
+    { id: 'at1', descripcion: 'Cumplimiento de medidas de seguridad apropiadas (Art. 68.1.a)', impacto: -20, selected: false },
+    { id: 'at2', descripcion: 'Cooperación activa con la autoridad (Art. 68.1.b)', impacto: -25, selected: false },
+    { id: 'at3', descripcion: 'Adopción de medidas correctivas inmediatas (Art. 68.1.c)', impacto: -20, selected: false },
+    { id: 'at4', descripcion: 'Buena fe del infractor y ausencia de dolo (Art. 68.1.d)', impacto: -15, selected: false },
+    { id: 'at5', descripcion: 'Ausencia de beneficio económico indebido (Art. 68.1.e)', impacto: -10, selected: false },
+    { id: 'at6', descripcion: 'Tamaño reducido de la organización (Art. 68.1.f)', impacto: -10, selected: false },
+    { id: 'at7', descripcion: 'Cumplimiento previo de obligaciones de transparencia (Art. 68.1.g)', impacto: -10, selected: false },
   ];
 
+  // Factores agravantes según Art. 68 LOPDP
   factoresAgravantes = [
-    { id: 'ag1', descripcion: 'Beneficio económico derivado de la infracción (Art. 68.2.a)', impacto: 25, selected: false },
-    { id: 'ag2', descripcion: 'Reincidencia en infracciones similares (Art. 68.2.b)', impacto: 30, selected: false },
-    { id: 'ag3', descripcion: 'Duración prolongada de la infracción (Art. 68.2.c)', impacto: 15, selected: false },
-    { id: 'ag4', descripcion: 'Gran número de titulares afectados (Art. 68.2.d)', impacto: 20, selected: false },
-    { id: 'ag5', descripcion: 'Afectación de datos sensibles o de menores (Art. 68.2.e)', impacto: 25, selected: false },
+    { id: 'ag1', descripcion: 'Beneficio económico derivado de la infracción (Art. 68.2.a)', impacto: 30, selected: false },
+    { id: 'ag2', descripcion: 'Reincidencia en infracciones similares (Art. 68.2.b)', impacto: 40, selected: false },
+    { id: 'ag3', descripcion: 'Duración prolongada de la infracción (Art. 68.2.c)', impacto: 20, selected: false },
+    { id: 'ag4', descripcion: 'Vulneración de datos sensibles o de menores de edad (Art. 68.2.d)', impacto: 35, selected: false },
+    { id: 'ag5', descripcion: 'Número elevado de titulares afectados (Art. 68.2.e)', impacto: 25, selected: false },
     { id: 'ag6', descripcion: 'Mala fe o intencionalidad en la conducta (Art. 68.2.f)', impacto: 20, selected: false },
     { id: 'ag7', descripcion: 'Obstaculización de la investigación (Art. 68.2.g)', impacto: 20, selected: false },
     { id: 'ag8', descripcion: 'Posición dominante en el mercado (Art. 68.2.h)', impacto: 15, selected: false },
@@ -443,22 +503,37 @@ export class SanctionsCalculatorComponent implements OnInit {
 
   calcular(): void {
     const inf = this.selectedInfraccion();
-    const vdn = this.vdn();
-    if (!inf || !vdn) return;
+    if (!inf) return;
 
-    const puntoMedio = (inf.rangoMin + inf.rangoMax) / 2;
-    const base = vdn * (puntoMedio / 100);
+    // Determinar base (VDN o SBU según sector)
+    let baseMonto: number;
+    if (this.sectorTipo() === 'privado') {
+      const vdn = this.vdn();
+      if (!vdn) return;
+      baseMonto = vdn;
+    } else {
+      const sbu = this.sbu();
+      if (!sbu) return;
+      baseMonto = sbu;
+    }
 
+    // Calcular sanción base usando rango de infracción
+    // El rango de infracción (0-100%) interpola entre rangoMin y rangoMax
+    const rangoPct = this.rangoInfraccion() / 100;
+    const porcentajeAplicado = inf.rangoMin + (inf.rangoMax - inf.rangoMin) * rangoPct;
+    const base = baseMonto * (porcentajeAplicado / 100);
+
+    // Calcular ajuste por factores
     let ajuste = 0;
-    this.factoresAtenuantes.forEach(f => { if (f.selected) ajuste -= f.impacto; });
+    this.factoresAtenuantes.forEach(f => { if (f.selected) ajuste += f.impacto; });
     this.factoresAgravantes.forEach(f => { if (f.selected) ajuste += f.impacto; });
     if (this.capacidadSelected()) ajuste += this.capacidadSelected()!.impacto;
 
     ajuste = Math.max(-50, Math.min(50, ajuste));
     const montoAjuste = base * (ajuste / 100);
     let final = base + montoAjuste;
-    const min = vdn * (inf.rangoMin / 100);
-    const max = vdn * (inf.rangoMax / 100);
+    const min = baseMonto * (inf.rangoMin / 100);
+    const max = baseMonto * (inf.rangoMax / 100);
     final = Math.max(min, Math.min(max, final));
 
     this.sancionBase.set(Math.round(base));
@@ -483,6 +558,9 @@ export class SanctionsCalculatorComponent implements OnInit {
     this.selectedTipo.set(null);
     this.selectedInfraccion.set(null);
     this.vdn.set(0);
+    this.sbu.set(0);
+    this.sectorTipo.set('privado');
+    this.rangoInfraccion.set(50);
     this.capacidadSelected.set(null);
     this.factoresAtenuantes.forEach(f => f.selected = false);
     this.factoresAgravantes.forEach(f => f.selected = false);

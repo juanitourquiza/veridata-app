@@ -231,9 +231,11 @@ export class RatComponent implements OnInit {
   }
 
   deleteActivity(id: number): void {
-    if (confirm('¿Eliminar esta actividad?')) {
-      this.activities.update(acts => acts.filter(a => a.id !== id));
-    }
+    this.modalService.confirm('¿Eliminar esta actividad?', 'Esta acción no se puede deshacer.').then(confirmed => {
+      if (confirmed) {
+        this.activities.update(acts => acts.filter(a => a.id !== id));
+      }
+    });
   }
 
   calculateRiskLevel(activity: any): string {
@@ -263,12 +265,12 @@ export class RatComponent implements OnInit {
                 risk_level: 'baja'
               }]);
             });
-            alert(`Se han extraído ${res.activities.length} actividades del documento.`);
+            this.modalService.success('Extracción completada', `Se han extraído ${res.activities.length} actividades del documento.`);
           }
         },
         error: () => {
           this.processing.set(false);
-          alert('Error al procesar el documento.');
+          this.modalService.error('Error', 'Error al procesar el documento.');
         }
       });
     }

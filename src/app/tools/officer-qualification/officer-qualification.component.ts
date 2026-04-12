@@ -110,7 +110,13 @@ interface DataTypeOption {
                   <td>{{ control.block }}</td>
                   <td>{{ control.name }}</td>
                   <td><small>{{ control.evidence }}</small></td>
-                  <td><span class="vd-badge" [class]="'vd-badge-' + control.criticality">{{ getCriticalityLabel(control.criticality) }}</span></td>
+                  <td>
+                    <select class="vd-select vd-select-sm" [ngModel]="control.criticality" (ngModelChange)="updateControl(control.id, 'criticality', $event)">
+                      <option value="critico">CRÍTICO (Alto)</option>
+                      <option value="mayor">MAYOR (Medio)</option>
+                      <option value="menor">MENOR (Bajo)</option>
+                    </select>
+                  </td>
                   <td>
                     <select class="vd-select" [ngModel]="control.response" (ngModelChange)="updateControl(control.id, 'response', $event); calculateScore(control)">
                       <option value="">Seleccionar...</option>
@@ -470,6 +476,7 @@ export class OfficerQualificationComponent implements OnInit {
     this.recalculateAllScores();
 
     const data = {
+      project_id: this.projectId(),
       provider_name: this.provider().name,
       service: this.provider().service,
       requesting_area: this.provider().requesting_area,
@@ -481,6 +488,9 @@ export class OfficerQualificationComponent implements OnInit {
         response: c.response,
         observation: c.observation,
         score: c.score,
+        criticality: c.criticality,
+        max_points: c.max_points,
+        blocks: c.blocks,
       }))
     };
 
@@ -583,9 +593,20 @@ export class OfficerQualificationComponent implements OnInit {
     });
   }
 
-  updateControl(controlId: number, field: string, value: any): void {
+  updateControl(id: number, field: string, value: any): void {
     this.controls.update(ctrls =>
-      ctrls.map(c => c.id === controlId ? { ...c, [field]: value } : c)
+      ctrls.map(c => {
+        if (c.id !== id) return c;
+        const updated = { ...c, [field]: value };
+        // Recalculate score if response changed
+        if (field === 'response') {
+          const maxPts = c.max_points || 15;
+          updated.score = value === 'si' ? maxPts
+            : value === 'parcial' ? Math.round(maxPts / 2)
+            : 0;
+        }
+        return updated;
+      })
     );
   }
 }

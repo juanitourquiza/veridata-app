@@ -232,33 +232,43 @@ export class ProjectListComponent implements OnInit {
   }
 
   restoreSnapshot(snapshotId: number): void {
-    if (!confirm('¿Estás seguro de restaurar esta evaluación? Se reemplazará la evaluación actual del proyecto.')) return;
-    const projectId = this.selectedProject()?.id;
-    if (!projectId) return;
+    this.modalService.confirm(
+      '¿Restaurar esta evaluación?',
+      'Se reemplazará la evaluación actual del proyecto.'
+    ).then(confirmed => {
+      if (!confirmed) return;
+      const projectId = this.selectedProject()?.id;
+      if (!projectId) return;
 
-    this.api.restoreEvaluationSnapshot(projectId, snapshotId).subscribe({
-      next: () => {
-        this.modalService.success('Éxito', 'Evaluación restaurada correctamente');
-        this.loadSnapshots(projectId);
-        // Reload projects to update maturity
-        this.api.getProjects().subscribe({
-          next: (res) => { this.projects.set(res.data); }
-        });
-      },
-      error: (err: any) => this.modalService.error('Error', 'Error al restaurar la evaluación: ' + err.message)
+      this.api.restoreEvaluationSnapshot(projectId, snapshotId).subscribe({
+        next: () => {
+          this.modalService.success('Éxito', 'Evaluación restaurada correctamente');
+          this.loadSnapshots(projectId);
+          // Reload projects to update maturity
+          this.api.getProjects().subscribe({
+            next: (res) => { this.projects.set(res.data); }
+          });
+        },
+        error: (err: any) => this.modalService.error('Error', 'Error al restaurar la evaluación: ' + err.message)
+      });
     });
   }
 
   deleteSnapshot(snapshotId: number): void {
-    if (!confirm('¿Estás seguro de eliminar esta versión guardada?')) return;
-    const projectId = this.selectedProject()?.id;
-    if (!projectId) return;
+    this.modalService.confirm(
+      '¿Eliminar esta versión?',
+      'Esta acción no se puede deshacer.'
+    ).then(confirmed => {
+      if (!confirmed) return;
+      const projectId = this.selectedProject()?.id;
+      if (!projectId) return;
 
-    this.api.deleteEvaluationSnapshot(projectId, snapshotId).subscribe({
-      next: () => {
-        this.loadSnapshots(projectId);
-      },
-      error: () => alert('Error al eliminar la evaluación.')
+      this.api.deleteEvaluationSnapshot(projectId, snapshotId).subscribe({
+        next: () => {
+          this.loadSnapshots(projectId);
+        },
+        error: () => this.modalService.error('Error', 'Error al eliminar la evaluación.')
+      });
     });
   }
 }

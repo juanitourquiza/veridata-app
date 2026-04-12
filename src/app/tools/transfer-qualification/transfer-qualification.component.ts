@@ -431,6 +431,7 @@ export class TransferQualificationComponent implements OnInit {
     this.saving.set(true);
 
     const data = {
+      project_id: this.projectId(),
       destination_country: this.transfer().destination_country,
       recipient: this.transfer().recipient,
       purpose: this.transfer().purpose,

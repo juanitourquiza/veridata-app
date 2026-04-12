@@ -1462,10 +1462,15 @@ export class ProjectWizardComponent implements OnInit {
     });
   }
   deleteControl(controlId: number): void {
-    if (!confirm('¿Estás seguro de eliminar este control? Esta acción no se puede deshacer.')) return;
-    this.api.deleteControl(controlId).subscribe({
-      next: () => this.loadEvaluation(),
-      error: (err) => this.modal.error('Error', err.error?.error || 'Error al eliminar el control')
+    this.modal.confirm(
+      '¿Eliminar este control?',
+      'Esta acción no se puede deshacer.'
+    ).then(confirmed => {
+      if (!confirmed) return;
+      this.api.deleteControl(controlId).subscribe({
+        next: () => this.loadEvaluation(),
+        error: (err) => this.modal.error('Error', err.error?.error || 'Error al eliminar el control')
+      });
     });
   }
   startAddingControl(domainId: number): void { this.addingControlToDomain.set(domainId); }
@@ -1516,10 +1521,9 @@ export class ProjectWizardComponent implements OnInit {
   }
 
   deleteActionItem(itemId: number): void {
-    if (!confirm('¿Estás seguro de que deseas eliminar esta acción del plan?')) {
-      return;
-    }
-    this.api.deleteActionItem(this.projectId, itemId).subscribe({
+    this.modal.confirm('¿Eliminar esta acción del plan?', 'Esta acción no se puede deshacer.').then(confirmed => {
+      if (!confirmed) return;
+      this.api.deleteActionItem(this.projectId, itemId).subscribe({
       next: () => {
         const items = this.actionItems().filter(i => i.id !== itemId);
         this.actionItems.set(items);
@@ -1884,20 +1888,26 @@ export class ProjectWizardComponent implements OnInit {
   }
 
   restoreSnapshot(snapshotId: number): void {
-    if (!confirm('¿Estás seguro de restaurar esta evaluación? Se reemplazará la evaluación actual.')) return;
-    this.api.restoreEvaluationSnapshot(this.projectId, snapshotId).subscribe({
-      next: () => {
-        this.loadEvaluation();
-        this.loadEvaluationSnapshots();
-        this.modal.success('Restaurado', 'Evaluación restaurada exitosamente.');
-      },
-      error: () => this.modal.error('Error', 'Error al restaurar la evaluación.')
+    this.modal.confirm(
+      '¿Restaurar esta evaluación?',
+      'Se reemplazará la evaluación actual.'
+    ).then(confirmed => {
+      if (!confirmed) return;
+      this.api.restoreEvaluationSnapshot(this.projectId, snapshotId).subscribe({
+        next: () => {
+          this.loadEvaluation();
+          this.loadEvaluationSnapshots();
+          this.modal.success('Restaurado', 'Evaluación restaurada exitosamente.');
+        },
+        error: () => this.modal.error('Error', 'Error al restaurar la evaluación.')
+      });
     });
   }
 
   deleteSnapshot(snapshotId: number): void {
-    if (!confirm('¿Estás seguro de eliminar esta versión guardada?')) return;
-    this.api.deleteEvaluationSnapshot(this.projectId, snapshotId).subscribe({
+    this.modal.confirm('¿Eliminar esta versión guardada?', 'Esta acción no se puede deshacer.').then(confirmed => {
+      if (!confirmed) return;
+      this.api.deleteEvaluationSnapshot(this.projectId, snapshotId).subscribe({
       next: () => {
         this.loadEvaluationSnapshots();
         if (this.selectedSnapshot()?.id === snapshotId) {
@@ -2147,21 +2157,22 @@ export class ProjectWizardComponent implements OnInit {
   }
 
   restoreVersion(delivId: number, versionId: number, versionNumber: number): void {
-    if (!confirm(`¿Restaurar a la versión ${versionNumber}? El contenido actual del entregable será reemplazado.`)) return;
-
-    this.api.restoreDeliverableVersion(this.projectId, delivId, versionId).subscribe({
-      next: (res: { message: string; deliverable: Deliverable }) => {
-        // Update deliverable in the list
-        const items = this.deliverables().map(d => d.id === delivId ? res.deliverable : d);
-        this.deliverables.set(items);
-        this.selectedRepoDeliverable.set(res.deliverable);
-
-        // Also update in step 5 if same deliverable is selected
-        if (this.selectedDeliverable()?.id === delivId) {
-          this.selectedDeliverable.set(res.deliverable);
-        }
-      },
-      error: () => this.modal.error('Error', 'Error al restaurar la versión.')
+    this.modal.confirm(
+      `¿Restaurar versión ${versionNumber}?`,
+      'El contenido actual del entregable será reemplazado.'
+    ).then(confirmed => {
+      if (!confirmed) return;
+      this.api.restoreDeliverableVersion(this.projectId, delivId, versionId).subscribe({
+        next: (res: { message: string; deliverable: Deliverable }) => {
+          const items = this.deliverables().map(d => d.id === delivId ? res.deliverable : d);
+          this.deliverables.set(items);
+          this.selectedRepoDeliverable.set(res.deliverable);
+          if (this.selectedDeliverable()?.id === delivId) {
+            this.selectedDeliverable.set(res.deliverable);
+          }
+        },
+        error: () => this.modal.error('Error', 'Error al restaurar la versión.')
+      });
     });
   }
 
@@ -2169,14 +2180,22 @@ export class ProjectWizardComponent implements OnInit {
     const pendingDeliverables = this.deliverablesByStatus('pending').length;
     const pendingActions = this.actionItems().filter(i => i.status === 'pendiente').length;
 
+    const proceed = () => {
+      this.api.updateProject(this.projectId, { status: 'completed' }).subscribe({
+        next: () => this.router.navigate(['/projects']),
+        error: () => this.router.navigate(['/projects'])
+      });
+    };
+
     if (pendingDeliverables > 0 || pendingActions > 0) {
-      const msg = `Hay elementos pendientes:\n${pendingDeliverables} entregables pendientes\n${pendingActions} acciones pendientes\n\n¿Deseas finalizar de todas formas?`;
-      if (!confirm(msg)) return;
+      this.modal.confirm(
+        'Elementos pendientes',
+        `${pendingDeliverables} entregables y ${pendingActions} acciones sin completar. ¿Finalizar de todas formas?`
+      ).then(confirmed => {
+        if (confirmed) proceed();
+      });
+    } else {
+      proceed();
     }
-    // Actualizar status a completed
-    this.api.updateProject(this.projectId, { status: 'completed' }).subscribe({
-      next: () => this.router.navigate(['/projects']),
-      error: () => this.router.navigate(['/projects'])
-    });
   }
 }

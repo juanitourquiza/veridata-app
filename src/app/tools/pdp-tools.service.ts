@@ -120,6 +120,10 @@ export class PdpToolsService {
     return this.http.put(`${this.apiUrl}/tools/rights-requests/${id}`, data);
   }
 
+  deleteRightsRequest(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/tools/rights-requests/${id}`);
+  }
+
   exportRightsRequests(params?: any): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/tools/rights-requests/export`, {
       params,

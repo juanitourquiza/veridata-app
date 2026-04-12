@@ -570,7 +570,7 @@ export class IncidentsComponent implements OnInit {
   }
 
   addIncident(): void {
-    const d = this.newIncident();
+    const d = { ...this.newIncident(), project_id: this.projectId() };
     if (!d.detection_date || !d.type) {
       this.modal.warning('Campos requeridos', 'Complete al menos la fecha de detección y tipo de incidente.');
       return;

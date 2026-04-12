@@ -162,6 +162,7 @@ export class ImpactAssessmentComponent implements OnInit {
   });
   assessmentHistory = signal<any[]>([]);
   loading = signal(false);
+  editingHistoryId = signal<number | null>(null);
 
   private pdpToolsService = inject(PdpToolsService);
   private modalService = inject(ModalService);
@@ -194,7 +195,7 @@ export class ImpactAssessmentComponent implements OnInit {
   }
 
   saveAssessment(): void {
-    const data = {
+    const data: any = {
       name: this.assessment().name,
       data_nature: this.assessment().data_nature,
       volume: this.assessment().volume,
@@ -203,7 +204,16 @@ export class ImpactAssessmentComponent implements OnInit {
       risks: this.assessment().risks
     };
 
-    this.pdpToolsService.createImpactAssessment(data).subscribe({
+    // CRITICAL: Include project_id to ensure proper project association
+    if (this.projectId()) {
+      data.project_id = this.projectId();
+    }
+
+    const request$ = this.editingHistoryId()
+      ? this.pdpToolsService.updateImpactAssessment(this.editingHistoryId()!, data)
+      : this.pdpToolsService.createImpactAssessment(data);
+
+    request$.subscribe({
       next: () => {
         this.modalService.success('Éxito', 'Evaluación guardada correctamente');
         this.loadHistory();
@@ -226,6 +236,7 @@ export class ImpactAssessmentComponent implements OnInit {
   }
 
   viewAssessment(id: number): void {
+    this.editingHistoryId.set(id);
     this.pdpToolsService.getImpactAssessment(id).subscribe({
       next: (res: any) => {
         this.assessment.set({

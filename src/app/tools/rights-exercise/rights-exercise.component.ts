@@ -383,7 +383,13 @@ export class RightsExerciseComponent implements OnInit {
   async deleteRequest(id: number): Promise<void> {
     const confirmed = await this.modal.confirm('¿Eliminar solicitud?', 'Esta acción no se puede deshacer.');
     if (confirmed) {
-      this.requests.update(reqs => reqs.filter(r => r.id !== id));
+      this.pdpToolsService.deleteRightsRequest(id).subscribe({
+        next: () => {
+          this.requests.update(reqs => reqs.filter(r => r.id !== id));
+          this.modal.success('Éxito', 'Solicitud eliminada correctamente');
+        },
+        error: (err: any) => this.modal.error('Error', 'Error al eliminar: ' + (err.message || 'Intenta de nuevo'))
+      });
     }
   }
 
