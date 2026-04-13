@@ -1524,13 +1524,14 @@ export class ProjectWizardComponent implements OnInit {
     this.modal.confirm('¿Eliminar esta acción del plan?', 'Esta acción no se puede deshacer.').then(confirmed => {
       if (!confirmed) return;
       this.api.deleteActionItem(this.projectId, itemId).subscribe({
-      next: () => {
-        const items = this.actionItems().filter(i => i.id !== itemId);
-        this.actionItems.set(items);
-      },
-      error: () => {
-        this.modal.error('Error', 'Error al eliminar la acción del plan');
-      }
+        next: () => {
+          const items = this.actionItems().filter(i => i.id !== itemId);
+          this.actionItems.set(items);
+        },
+        error: () => {
+          this.modal.error('Error', 'Error al eliminar la acción del plan');
+        }
+      });
     });
   }
 
@@ -1915,6 +1916,7 @@ export class ProjectWizardComponent implements OnInit {
         }
       },
       error: () => this.modal.error('Error', 'Error al eliminar la evaluación.')
+      });
     });
   }
 
