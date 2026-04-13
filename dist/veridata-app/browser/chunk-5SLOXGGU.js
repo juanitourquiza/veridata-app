@@ -1,0 +1,1 @@
+var o=typeof window<"u"&&(window.location.hostname==="localhost"||window.location.hostname==="127.0.0.1"),a={production:!o,apiUrl:o?"http://localhost:8000/api":"https://phplaravel-1212383-6257708.cloudwaysapps.com/api",appName:"Veridata",version:"2.3.0"};export{a};
