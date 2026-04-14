@@ -360,11 +360,12 @@ export class RightsExerciseComponent implements OnInit {
     // Map frontend fields to backend expected fields
     const requestData = {
       project_id: this.projectId(),
-      request_type: this.newRequest().right_type,  // Maps right_type → request_type
+      received_date: this.newRequest().received_date,
+      channel: this.newRequest().channel || 'email',
+      requester_type: this.newRequest().requester_type || 'titular',
       requester_name: this.newRequest().requester_name,
-      requester_email: '',  // Optional field, backend accepts empty
-      request_date: this.newRequest().received_date,  // Maps received_date → request_date
-      description: `Canal: ${this.newRequest().channel || 'N/A'} | Tipo solicitante: ${this.newRequest().requester_type || 'N/A'} | Área: ${this.newRequest().responsible_area || 'N/A'} | ${this.newRequest().description || ''}`
+      right_type: this.newRequest().right_type,
+      description: this.newRequest().description || ''
     };
 
     this.pdpToolsService.createRightsRequest(requestData).subscribe({
