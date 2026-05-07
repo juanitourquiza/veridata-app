@@ -2,7 +2,7 @@ const isLocal = typeof window !== 'undefined' && (window.location.hostname === '
 
 export const environment = {
     production: !isLocal,
-    apiUrl: isLocal ? 'http://localhost:8000/api' : 'https://phplaravel-1212383-6257708.cloudwaysapps.com/api',
+    apiUrl: isLocal ? 'http://localhost:8000/api' : 'https://backveridata.hackeruna.com/api',
     appName: 'Veridata',
     version: '2.3.0',
 };

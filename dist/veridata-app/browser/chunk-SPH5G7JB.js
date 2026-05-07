@@ -1,0 +1,1 @@
+var o=typeof window<"u"&&(window.location.hostname==="localhost"||window.location.hostname==="127.0.0.1"),a={production:!o,apiUrl:o?"http://localhost:8000/api":"https://backveridata.hackeruna.com/api",appName:"Veridata",version:"2.3.0"};export{a};
